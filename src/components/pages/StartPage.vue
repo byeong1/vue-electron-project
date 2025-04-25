@@ -4,108 +4,113 @@ import { useRouter } from "vue-router";
 import SingleBox from "@components/boxes/SingleBox.vue";
 import MultiButton from "@components/buttons/MultiButton.vue";
 import SingleButton from "@components/buttons/SingleButton.vue";
-
 import { EDUCATION_STAGE, GRADE } from "@constants";
 
-const router = useRouter();
-
-/* 반응형 상태 정의 */
-const selectedStageButton = ref<number | null>(null);
-const selectedGradeButton = ref<number | null>(null);
-const selectStage = ref<string | null>(null);
-const selectGrade = ref<string | null>(null);
-
-/* 계산된 속성 */
-const isStageSelected = computed<boolean>(() => selectedStageButton.value !== null);
-const isGradeSelected = computed<boolean>(() => selectedGradeButton.value !== null);
-const isGradeSelectorEnabled = computed<boolean>(() => isStageSelected.value);
-
-/* 교육 단계 버튼 옵션 */
+/* 타입 정의 */
 interface ButtonOption {
     label: string;
     value: string;
     color: string;
 }
 
-const stageButtons: ButtonOption[] = [
-    { label: EDUCATION_STAGE.ELEMENTARY, value: EDUCATION_STAGE.ELEMENTARY, color: "#3498db" },
-    { label: EDUCATION_STAGE.MIDDLE, value: EDUCATION_STAGE.MIDDLE, color: "#2ecc71" },
-    { label: EDUCATION_STAGE.HIGH, value: EDUCATION_STAGE.HIGH, color: "#e74c3c" },
+interface NavigationQuery {
+    [key: string]: string;
+    stage: string;
+    grade: string;
+}
+
+/* 상수 정의 */
+const BUTTON_COLOR = "white" as const;
+
+const STAGE_BUTTONS: ButtonOption[] = [
+    { label: EDUCATION_STAGE.ELEMENTARY, value: EDUCATION_STAGE.ELEMENTARY, color: BUTTON_COLOR },
+    { label: EDUCATION_STAGE.MIDDLE, value: EDUCATION_STAGE.MIDDLE, color: BUTTON_COLOR },
+    { label: EDUCATION_STAGE.HIGH, value: EDUCATION_STAGE.HIGH, color: BUTTON_COLOR },
 ];
 
-/* 학년 버튼 옵션 */
-const gradeButtons: ButtonOption[] = [
-    { label: GRADE.FIRST, value: GRADE.FIRST, color: "#3498db" },
-    { label: GRADE.SECOND, value: GRADE.SECOND, color: "#2ecc71" },
-    { label: GRADE.THIRD, value: GRADE.THIRD, color: "#e74c3c" },
+const GRADE_BUTTONS: ButtonOption[] = [
+    { label: GRADE.FIRST, value: GRADE.FIRST, color: BUTTON_COLOR },
+    { label: GRADE.SECOND, value: GRADE.SECOND, color: BUTTON_COLOR },
+    { label: GRADE.THIRD, value: GRADE.THIRD, color: BUTTON_COLOR },
 ];
+
+/* 훅 및 상태 정의 */
+const router = useRouter();
+
+const selectedStageButton = ref<number | null>(null);
+const selectedGradeButton = ref<number | null>(null);
+const selectedStage = ref<string | null>(null);
+const selectedGrade = ref<string | null>(null);
+
+/* 계산된 속성 */
+const isStageSelected = computed<boolean>(() => selectedStageButton.value !== null);
+const isGradeSelected = computed<boolean>(() => selectedGradeButton.value !== null);
+const isGradeSelectorEnabled = computed<boolean>(() => isStageSelected.value);
 
 /* 메서드 */
-const eduStageButtonSelector = (index: number, label: string, value: string): void => {
-    selectStage.value = value;
+const handleStageSelect = (index: number, label: string, value: string): void => {
+    selectedStage.value = value;
     selectedStageButton.value = index;
     selectedGradeButton.value = null;
-    selectGrade.value = null;
+    selectedGrade.value = null;
 };
 
-const gradeButtonSelector = (index: number, label: string, value: string): void => {
-    selectGrade.value = value;
+const handleGradeSelect = (index: number, label: string, value: string): void => {
+    selectedGrade.value = value;
     selectedGradeButton.value = index;
 };
 
-const createProblem = (): void => {
-    if (selectStage.value && selectGrade.value) {
-        alert(`${selectStage.value} - ${selectGrade.value} 문제 생성 중입니다`);
-
-        router.push({
-            path: "/quiz",
-            query: {
-                stage: selectStage.value,
-                grade: selectGrade.value,
-            },
-        });
-    } else {
+const navigateToQuiz = (): void => {
+    if (!selectedStage.value || !selectedGrade.value) {
         alert("교육 단계와 학년을 모두 선택해 주세요!");
+        return;
     }
+
+    const query: NavigationQuery = {
+        stage: selectedStage.value,
+        grade: selectedGrade.value,
+    };
+
+    alert(`${selectedStage.value} - ${selectedGrade.value} 문제 생성 중입니다`);
+    router.push({ path: "/quiz", query });
 };
 </script>
 
 <template>
     <h1>시작 화면</h1>
     <SingleBox :width="500" :height="700">
-        <div class="box-content">
+        <div class="container">
             <h2>Vue.js 수학 문제 생성 AI 프로젝트</h2>
-
             <div class="main-text">교육 단계 / 학년을 선택하세요!</div>
 
             <MultiButton
-                class="edu-stage-selector"
-                :buttons="stageButtons"
-                @button-click="eduStageButtonSelector"
+                class="stage-selector"
+                :buttons="STAGE_BUTTONS"
+                @button-click="handleStageSelect"
                 :selected-button="selectedStageButton"
             />
 
             <MultiButton
                 v-if="isGradeSelectorEnabled"
                 class="grade-selector"
-                :buttons="gradeButtons"
-                @button-click="gradeButtonSelector"
+                :buttons="GRADE_BUTTONS"
+                @button-click="handleGradeSelect"
                 :selected-button="selectedGradeButton"
             />
 
             <SingleButton
                 v-if="isGradeSelected"
-                class="create-quiz-button"
+                class="create-button"
                 color="black"
                 label="문제 생성"
-                @click="createProblem"
+                @click="navigateToQuiz"
             />
         </div>
     </SingleBox>
 </template>
 
 <style scoped>
-.box-content {
+.container {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -113,46 +118,44 @@ const createProblem = (): void => {
 
 .main-text {
     font-size: 40px;
+    font-weight: 900;
     border-bottom: 2px solid black;
     margin-bottom: 20px;
     padding-bottom: 30px;
-    font-weight: 900;
 }
 
-.create-quiz-button {
-    margin-top: 30px;
+.stage-selector,
+.grade-selector {
     display: flex;
     justify-content: center;
     gap: 16px;
 }
 
-.edu-stage-selector {
+.stage-selector {
     margin-top: 30px;
-    display: flex;
-    justify-content: center;
-    gap: 16px;
 }
 
 .grade-selector {
     margin-top: 20px;
-    display: flex;
-    justify-content: center;
-    gap: 16px;
 }
 
-.edu-stage-selector .button {
+.create-button {
+    margin-top: 30px;
+}
+
+.stage-selector .button {
     padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
-.edu-stage-selector .button.selected {
+.stage-selector .button.selected {
     background-color: #f39c12;
     color: white;
 }
 
-.edu-stage-selector .button:hover {
+.stage-selector .button:hover {
     background-color: #bdc3c7;
 }
 

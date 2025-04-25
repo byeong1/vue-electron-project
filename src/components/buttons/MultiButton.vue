@@ -1,57 +1,81 @@
 <template>
-    <div class="button-group">
+    <div class="multi-button-container">
         <button
             v-for="(button, index) in buttons"
             :key="index"
-            :style="{ backgroundColor: button.color }"
-            :class="{ selected: selectedButton === index }"
-            @click="handleClick(index, button.label, button.value)"
+            class="multi-button"
+            :class="[`button-${button.color}`, { selected: selectedButton === index }]"
+            @click="handleClick(index, button)"
         >
             {{ button.label }}
         </button>
     </div>
 </template>
 
-<script>
-export default {
-    props: {
-        buttons: {
-            type: Array,
-            required: true,
-        },
-        selectedButton: {
-            type: Number,
-            default: null,
-        },
-    },
-    methods: {
-        handleClick(index, label, value) {
-            this.$emit("button-click", index, label, value); // 버튼 클릭 시 이벤트 발생
-        },
-    },
+<script setup lang="ts">
+interface ButtonOption {
+    label: string;
+    value: string;
+    color: string;
+}
+
+interface Props {
+    buttons: ButtonOption[];
+    selectedButton: number | null;
+}
+
+interface Emits {
+    (e: "button-click", index: number, label: string, value: string): void;
+}
+
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
+
+const handleClick = (index: number, button: ButtonOption): void => {
+    emit("button-click", index, button.label, button.value);
 };
 </script>
 
 <style scoped>
-.button-group {
+.multi-button-container {
     display: flex;
-    gap: 10px;
+    gap: 16px;
+    width: 100%;
 }
 
-button {
-    padding: 10px 20px;
-    border: 2px solid black;
+.multi-button {
+    flex: 1;
+    padding: 12px 24px;
+    border: none;
     border-radius: 5px;
+    font-size: 16px;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
+    min-width: 120px;
 }
 
-button.selected {
+.button-white {
+    background-color: white;
+    color: #2c3e50;
+    border: 1px solid #2c3e50;
+}
+
+.button-white:hover {
+    background-color: #f8f9fa;
+}
+
+.button-white.selected {
     background-color: #f39c12;
     color: white;
+    border: none;
 }
 
-button:hover {
-    background-color: #bdc3c7;
+@media (max-width: 768px) {
+    .multi-button {
+        padding: 10px 20px;
+        font-size: 14px;
+        min-width: 100px;
+    }
 }
 </style>

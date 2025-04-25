@@ -13,4 +13,5 @@ export const GRADE = {
 export const QUIZ_BUTTON = {
     HINT: "힌트 보기",
     ANSWER: "정답 보기",
+    BACK: "뒤로가기",
 };
