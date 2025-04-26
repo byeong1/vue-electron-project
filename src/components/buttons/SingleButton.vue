@@ -1,9 +1,3 @@
-<template>
-    <button class="single-button" :class="[`button-${props.color}`]" @click="emit('click')">
-        {{ props.label }}
-    </button>
-</template>
-
 <script setup lang="ts">
 interface Props {
     label: string;
@@ -11,10 +5,17 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
 const emit = defineEmits<{
     (e: "click"): void;
 }>();
 </script>
+
+<template>
+    <button class="single-button" :class="[`button-${props.color}`]" @click="emit('click')">
+        {{ props.label }}
+    </button>
+</template>
 
 <style scoped>
 .single-button {
@@ -35,7 +36,7 @@ const emit = defineEmits<{
 }
 
 .button-black:hover {
-    background-color: #34495e;
+    background-color: #34495f;
 }
 
 .button-white {

@@ -1,3 +1,24 @@
+<script setup lang="ts">
+import type { ButtonOptionType } from "@/types/components/buttonType";
+
+interface Props {
+    buttons: ButtonOptionType[];
+    selectedButton: number | null;
+}
+
+interface Emits {
+    (e: "button-click", index: number, label: string, value: string): void;
+}
+
+const props = defineProps<Props>();
+
+const emit = defineEmits<Emits>();
+
+const handleClick = (index: number, button: ButtonOptionType): void => {
+    emit("button-click", index, button.label, button.value);
+};
+</script>
+
 <template>
     <div class="multi-button-container">
         <button
@@ -11,30 +32,6 @@
         </button>
     </div>
 </template>
-
-<script setup lang="ts">
-interface ButtonOption {
-    label: string;
-    value: string;
-    color: string;
-}
-
-interface Props {
-    buttons: ButtonOption[];
-    selectedButton: number | null;
-}
-
-interface Emits {
-    (e: "button-click", index: number, label: string, value: string): void;
-}
-
-const props = defineProps<Props>();
-const emit = defineEmits<Emits>();
-
-const handleClick = (index: number, button: ButtonOption): void => {
-    emit("button-click", index, button.label, button.value);
-};
-</script>
 
 <style scoped>
 .multi-button-container {
@@ -62,7 +59,7 @@ const handleClick = (index: number, button: ButtonOption): void => {
 }
 
 .button-white:hover {
-    background-color: #f8f9fa;
+    background-color: #f39c12;
 }
 
 .button-white.selected {
