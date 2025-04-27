@@ -1,30 +1,31 @@
 import { createRouter, createWebHistory } from "vue-router";
-import StartPage from "@components/pages/StartPage.vue";
-import QuizPage from "@components/pages/QuizPage.vue";
-import ExplanationPage from "@components/pages/ExplanationPage.vue";
+
+import MainPage from "@components/pages/MainPage.vue";
+import QuizSetupPage from "@components/pages/QuizSetupPage.vue";
+import QuizPlayPage from "@components/pages/QuizPlayPage.vue";
 
 const routes = [
-    /* 시작 화면 */
+    /* 메인 화면 */
     {
-        path: "/",
-        name: "Home",
-        component: StartPage,
+        path: "/quiz",
+        name: "MainPage",
+        component: MainPage,
+    },
+    /* 문제 선택 화면 */
+    {
+        path: "/quiz/setup",
+        name: "QuizSetupPage",
+        component: QuizSetupPage,
     },
     /* 문제 화면 */
     {
-        path: "/quiz",
-        name: "QuizPage",
-        component: QuizPage,
-        props: (route) => ({
+        path: "/quiz/play",
+        name: "QuizPlayPage",
+        component: QuizPlayPage,
+        props: (route: any) => ({
             stage: route.query.stage,
             grade: route.query.grade,
         }),
-    },
-    /* 풀이 화면 */
-    {
-        path: "/explanation",
-        name: "ExplanationPage",
-        component: ExplanationPage,
     },
 ];
 

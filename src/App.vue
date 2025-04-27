@@ -1,25 +1,84 @@
 <script setup lang="ts">
-import { useRouter } from "vue-router";
+import { ref, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import NavBar from "@components/navigation/NavBar.vue";
 
 const router = useRouter();
+const route = useRoute();
 
-router.push("/");
+const tabs = [
+    { label: "홈", value: "quiz", icon: "🏠" },
+    { label: "문제 풀기", value: "quizSetup", icon: "🔍" },
+    { label: "오늘의 운세", value: "horoscope", icon: "❤️" },
+    { label: "내정보", value: "profile", icon: "👤" },
+];
+
+const selectedTab = ref("quiz");
+
+/* 라우트 변경 시 탭 상태 동기화 */
+watch(
+    () => route.path,
+    (path) => {
+        if (path === "/quiz") selectedTab.value = "quiz";
+        else if (path.startsWith("/quiz/setup")) selectedTab.value = "quizSetup";
+        else if (path.startsWith("/horoscope")) selectedTab.value = "horoscope";
+        else if (path.startsWith("/profile")) selectedTab.value = "profile";
+    },
+    { immediate: true },
+);
+
+/* 탭 클릭 시 라우팅 */
+function onTabChange(value: string) {
+    selectedTab.value = value;
+    if (value === "quiz") router.push("/quiz");
+    else if (value === "quizSetup") router.push("/quiz/setup");
+    else if (value === "horoscope") router.push("/horoscope");
+    else if (value === "profile") router.push("/profile");
+}
+
+router.push("/quiz");
 </script>
 
 <template>
-    <div class="container">
-        <router-view />
+    <div class="app-layout">
+        <NavBar v-model="selectedTab" :tabs="tabs" @update:modelValue="onTabChange" />
+        <div class="main-content">
+            <router-view />
+        </div>
     </div>
 </template>
 
-<style scoped>
-.container {
+<style>
+html,
+body,
+#app {
+    background-color: antiquewhite;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+.app-layout {
     display: flex;
-    justify-content: center; /* 가로 중앙 정렬 */
-    align-items: center; /* 세로 중앙 정렬 */
-    min-height: 100vh; /* 최소 높이를 화면 크기로 설정 */
-    width: 100%; /* 화면 전체 너비 */
-    overflow: auto; /* 콘텐츠가 넘칠 경우 스크롤바 표시 */
-    flex-direction: column; /* 세로로 정렬하기 */
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: antiquewhite;
+}
+
+.main-content {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 100px;
+}
+
+.logo {
+    width: 400px;
+    height: 400px;
+    object-fit: contain;
+    display: block;
+    margin: 40px auto 20px auto;
 }
 </style>

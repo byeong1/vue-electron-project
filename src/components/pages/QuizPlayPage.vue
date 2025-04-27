@@ -5,19 +5,14 @@ import { useRouter, useRoute } from "vue-router";
 import SingleBox from "@components/boxes/SingleBox.vue";
 import MultiButton from "@components/buttons/MultiButton.vue";
 
-import { EDUCATION_STAGE, GRADE, QUIZ_BUTTON } from "@constants";
-import type { QuizData } from "@/api/types";
-import type { ButtonOptionType } from "@types/components/buttonType";
+import { generateQuiz } from "@api/services/ollamaService";
 
-/* 타입 정의 */
-interface NavigationQuery {
-    [key: string]: string;
-    stage: string;
-    grade: string;
-}
+import { EDUCATION_STAGE, GRADE, QUIZ_BUTTON } from "@constants";
+
+import type { IQuizData, IButtonOption } from "@types";
 
 /* 상수 정의 */
-const QUIZ_BUTTONS: ButtonOptionType[] = [
+const QUIZ_BUTTONS: IButtonOption[] = [
     {
         label: QUIZ_BUTTON.HINT,
         value: QUIZ_BUTTON.HINT,
@@ -29,8 +24,8 @@ const QUIZ_BUTTONS: ButtonOptionType[] = [
         color: "white",
     },
     {
-        label: QUIZ_BUTTON.BACK,
-        value: QUIZ_BUTTON.BACK,
+        label: "다음 문제",
+        value: "NEXT",
         color: "white",
     },
 ];
@@ -49,14 +44,20 @@ const route = useRoute();
 
 const selectedButton = ref<number | null>(null);
 const selectedButtonValue = ref<string | null>(null);
+const isLoading = ref<boolean>(false);
+
 const stage = ref<string | null>((route.query.stage as string) || null);
 const grade = ref<string | null>((route.query.grade as string) || null);
-const currentQuiz = ref<QuizData | null>(null);
+
+const currentQuiz = ref<IQuizData | null>(null);
 
 /* 메서드 */
 const handleButtonClick = (index: number, label: string, value: string): void => {
     if (value === QUIZ_BUTTON.BACK) {
         router.push("/");
+        return;
+    } else if (value === "NEXT") {
+        generateNextQuiz();
         return;
     } else if (selectedButton.value === index) {
         selectedButton.value = null;
@@ -67,24 +68,63 @@ const handleButtonClick = (index: number, label: string, value: string): void =>
     }
 };
 
+const generateNextQuiz = async (): Promise<void> => {
+    isLoading.value = true;
+    try {
+        const nestQuizData: IQuizData = await generateQuiz(
+            stage.value,
+            grade.value,
+            currentQuiz.value?.quiz,
+        );
+
+        console.log("nestQuizData :", nestQuizData);
+
+        sessionStorage.setItem("currentQuiz", JSON.stringify(nestQuizData));
+
+        // 상태 초기화
+        selectedButton.value = null;
+        selectedButtonValue.value = null;
+        currentQuiz.value = nestQuizData;
+
+        // 같은 경로로 이동
+        router.push({
+            path: "/quiz/play",
+            query: {
+                stage: stage.value,
+                grade: grade.value,
+            },
+        });
+    } catch (error) {
+        console.error("퀴즈 생성 중 오류 발생:", error);
+
+        alert("다음 문제를 생성하는데 실패했습니다.");
+    } finally {
+        isLoading.value = false;
+    }
+};
+
 const validateStageAndGrade = (): boolean => {
     const isValidStage = stage.value ? Object.values(EDUCATION_STAGE).includes(stage.value) : false;
     const isValidGrade = grade.value ? Object.values(GRADE).includes(grade.value) : false;
+
     return isValidStage && isValidGrade;
 };
 
 const loadQuizFromSession = (): void => {
-    const quizData = sessionStorage.getItem("currentQuiz");
+    const quizData: string | null = sessionStorage.getItem("currentQuiz");
     if (quizData) {
         try {
-            currentQuiz.value = JSON.parse(quizData) as QuizData;
+            currentQuiz.value = JSON.parse(quizData) as IQuizData;
         } catch (error) {
             console.error("퀴즈 데이터 파싱 실패:", error);
+
             alert("퀴즈 데이터를 불러오는데 실패했습니다.");
+
             router.push("/");
         }
     } else {
         alert("퀴즈 데이터가 없습니다.");
+
         router.push("/");
     }
 };
@@ -93,47 +133,51 @@ const loadQuizFromSession = (): void => {
 onMounted(() => {
     if (!validateStageAndGrade()) {
         alert("잘못된 요청입니다.");
+
         router.push("/");
+
         return;
     }
+
     loadQuizFromSession();
 });
 </script>
 
 <template>
-    <h1>{{ stage }} - {{ grade }} 문제 화면</h1>
-    <SingleBox :width="500" :height="700">
-        <div class="container">
-            <SingleBox v-if="currentQuiz" class="quiz-box">
-                <div class="quiz-text">
-                    {{ currentQuiz.quiz }}
-                </div>
-            </SingleBox>
-            <div v-else class="loading">문제를 불러오는 중...</div>
-            <div class="quiz-button">
-                <MultiButton
-                    :buttons="QUIZ_BUTTONS"
-                    @button-click="handleButtonClick"
-                    :selected-button="selectedButton"
-                />
+    <div class="container">
+        <SingleBox v-if="currentQuiz && !isLoading" class="quiz-box">
+            <div class="quiz-text">
+                {{ currentQuiz.quiz }}
             </div>
-            <SingleBox v-if="selectedButtonValue && currentQuiz" class="answer-box">
-                <div class="answer-text">
-                    {{
-                        selectedButtonValue === QUIZ_BUTTON.HINT
-                            ? currentQuiz.hint
-                            : currentQuiz.answer
-                    }}
-                </div>
-            </SingleBox>
+        </SingleBox>
+
+        <div v-else class="loading">
+            {{ isLoading ? "문제 생성 중..." : "문제를 불러오는 중..." }}
         </div>
-    </SingleBox>
+
+        <div v-if="currentQuiz && !isLoading" class="quiz-button">
+            <MultiButton
+                :buttons="QUIZ_BUTTONS"
+                @button-click="handleButtonClick"
+                :selected-button="selectedButton"
+            />
+        </div>
+
+        <SingleBox v-if="selectedButtonValue && currentQuiz && !isLoading" class="answer-box">
+            <div class="answer-text">
+                {{
+                    selectedButtonValue === QUIZ_BUTTON.HINT ? currentQuiz.hint : currentQuiz.answer
+                }}
+            </div>
+        </SingleBox>
+    </div>
 </template>
 
 <style scoped>
 .container {
     display: flex;
     flex-direction: column;
+    align-items: center;
 }
 
 .quiz-box {
@@ -202,6 +246,7 @@ onMounted(() => {
     line-height: 1.5;
     color: #495057;
     word-break: keep-all;
+    white-space: pre-line;
 }
 
 @media (max-width: 768px) {
