@@ -1,9 +1,6 @@
 import { app, BrowserWindow } from "electron";
-import * as path from "path";
-import isDev from "electron-is-dev";
 
 function createWindow(): void {
-    // 브라우저 창 생성
     const mainWindow = new BrowserWindow({
         width: 1200,
         height: 800,
@@ -13,15 +10,16 @@ function createWindow(): void {
         },
     });
 
-    // 개발 모드에서는 Vite 개발 서버를, 프로덕션 모드에서는 빌드된 파일을 로드
-    mainWindow.loadURL(
-        isDev ? "http://localhost:5173" : `file://${path.join(__dirname, "../dist/index.html")}`,
-    );
-
-    // 개발 모드일 때 DevTools를 자동으로 열기
-    if (isDev) {
-        mainWindow.webContents.openDevTools();
+    if (process.env.NODE_ENV === "dev") {
+        mainWindow.loadURL("http://localhost:5173");
+    } else {
+        mainWindow.loadFile("./dist/vue/index.html");
     }
+
+    /* 개발 모드일 때 DevTools를 자동으로 열기 */
+    // if (process.env.NODE_ENV === "dev") {
+    mainWindow.webContents.openDevTools();
+    // }
 }
 
 // Electron이 준비되면 창 생성

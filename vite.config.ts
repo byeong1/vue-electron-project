@@ -1,4 +1,3 @@
-import { fileURLToPath, URL } from "node:url";
 import path from "path";
 
 import { defineConfig } from "vite";
@@ -7,7 +6,11 @@ import vueDevTools from "vite-plugin-vue-devtools";
 
 // https://vite.dev/config/
 export default defineConfig({
+    base: path.resolve(__dirname, "dist/vue"),
     plugins: [vue(), vueDevTools()],
+    build: {
+        outDir: "dist/vue",
+    },
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),

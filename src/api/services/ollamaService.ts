@@ -1,11 +1,5 @@
 import axios from "axios";
 
-interface OllamaRequest {
-    model: string;
-    prompt: string;
-    stream?: boolean;
-}
-
 interface OllamaResponse {
     model: string;
     response: string;
@@ -17,7 +11,7 @@ class OllamaService {
     private baseURL: string;
 
     private constructor() {
-        this.baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:11434/api";
+        this.baseURL = "http://localhost:11434/api";
     }
 
     public static getInstance(): OllamaService {
