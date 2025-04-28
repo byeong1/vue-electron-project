@@ -1,6 +1,6 @@
 {
     "name": "vue-project",
-    "version": "0.0.3",
+    "version": "0.0.8",
     "main": "dist/electron/main.js",
     "type": "commonjs",
     "private": true,
@@ -9,14 +9,13 @@
         "build": "vite build",
         "preview": "vite preview",
         "electron:dev": "cross-env NODE_ENV=dev concurrently \"yarn dev\" \"tsc -p electron/tsconfig.json && electron .\"",
-        "electron:build": "yarn build && tsc -p electron/tsconfig.json && dotenv electron-builder -m --publish always",
         "electron:build:mac": "yarn build && tsc -p electron/tsconfig.json && electron-builder -m",
         "electron:build:win": "yarn build && tsc -p electron/tsconfig.json && electron-builder -w",
         "electron:build:linux": "yarn build && tsc -p electron/tsconfig.json && electron-builder -l",
         "build-only": "vite build",
         "type-check": "vue-tsc --build",
         "format": "prettier --write src/",
-        "publish": "yarn dotenv electron-builder -m --publish always"
+        "publish": "dotenv --override -- electron-builder -m --publish always"
     },
     "dependencies": {
         "axios": "^1.9.0",
