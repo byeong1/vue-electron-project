@@ -6,10 +6,18 @@ import vueDevTools from "vite-plugin-vue-devtools";
 
 // https://vite.dev/config/
 export default defineConfig({
-    base: path.resolve(__dirname, "dist/vue"),
     plugins: [vue(), vueDevTools()],
+    base: "./",
     build: {
         outDir: "dist/vue",
+        assetsDir: "assets",
+        rollupOptions: {
+            output: {
+                assetFileNames: "assets/[name]-[hash][extname]",
+                chunkFileNames: "assets/[name]-[hash].js",
+                entryFileNames: "assets/[name]-[hash].js",
+            },
+        },
     },
     resolve: {
         alias: {

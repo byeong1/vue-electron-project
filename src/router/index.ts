@@ -1,8 +1,9 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHashHistory } from "vue-router";
 
 import MainPage from "@components/pages/MainPage.vue";
 import QuizSetupPage from "@components/pages/QuizSetupPage.vue";
 import QuizPlayPage from "@components/pages/QuizPlayPage.vue";
+import FortunePage from "@components/pages/FortunePage.vue";
 
 const routes = [
     /* 메인 화면 */
@@ -27,10 +28,16 @@ const routes = [
             grade: route.query.grade,
         }),
     },
+    /* 운세 화면 */
+    {
+        path: "/fortune",
+        name: "FortunePage",
+        component: FortunePage,
+    },
 ];
 
 const router = createRouter({
-    history: createWebHistory(),
+    history: createWebHashHistory(),
     routes,
 });
 

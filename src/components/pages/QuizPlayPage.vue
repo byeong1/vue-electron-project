@@ -30,14 +30,6 @@ const QUIZ_BUTTONS: IButtonOption[] = [
     },
 ];
 
-/* 임시 상수 정의 (주석 처리)
-const DUMMY_QUIZ = {
-    quiz: "사과가 4개 있었는데, 2개를 먹었어요. 남은 사과는 몇 개인가요?",
-    hint: "처음에 가진 사과의 수와 먹은 사과의 수를 이용해 남은 수를 빼기로 계산해보세요.",
-    answer: "2개",
-};
-*/
-
 /* 훅 및 상태 정의 */
 const router = useRouter();
 const route = useRoute();
@@ -76,8 +68,6 @@ const generateNextQuiz = async (): Promise<void> => {
             grade.value,
             currentQuiz.value?.quiz,
         );
-
-        console.log("nestQuizData :", nestQuizData);
 
         sessionStorage.setItem("currentQuiz", JSON.stringify(nestQuizData));
 
@@ -146,6 +136,8 @@ onMounted(() => {
 <template>
     <div class="container">
         <SingleBox v-if="currentQuiz && !isLoading" class="quiz-box">
+            <div class="quiz-info">{{ currentQuiz.difficulty }} - {{ currentQuiz.topic }}</div>
+
             <div class="quiz-text">
                 {{ currentQuiz.quiz }}
             </div>

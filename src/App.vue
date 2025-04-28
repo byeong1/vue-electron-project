@@ -9,7 +9,7 @@ const route = useRoute();
 const tabs = [
     { label: "홈", value: "quiz", icon: "🏠" },
     { label: "문제 풀기", value: "quizSetup", icon: "🔍" },
-    { label: "오늘의 운세", value: "horoscope", icon: "❤️" },
+    { label: "오늘의 운세", value: "fortune", icon: "❤️" },
     { label: "내정보", value: "profile", icon: "👤" },
 ];
 
@@ -21,20 +21,20 @@ watch(
     (path) => {
         if (path === "/quiz") selectedTab.value = "quiz";
         else if (path.startsWith("/quiz/setup")) selectedTab.value = "quizSetup";
-        else if (path.startsWith("/horoscope")) selectedTab.value = "horoscope";
+        else if (path.startsWith("/fortune")) selectedTab.value = "fortune";
         else if (path.startsWith("/profile")) selectedTab.value = "profile";
     },
     { immediate: true },
 );
 
 /* 탭 클릭 시 라우팅 */
-function onTabChange(value: string) {
+const onTabChange = (value: string): void => {
     selectedTab.value = value;
     if (value === "quiz") router.push("/quiz");
     else if (value === "quizSetup") router.push("/quiz/setup");
-    else if (value === "horoscope") router.push("/horoscope");
+    else if (value === "fortune") router.push("/fortune");
     else if (value === "profile") router.push("/profile");
-}
+};
 
 router.push("/quiz");
 </script>

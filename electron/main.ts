@@ -1,4 +1,5 @@
 import { app, BrowserWindow } from "electron";
+import path from "path";
 
 /* 창 생성 */
 function createWindow(): void {
@@ -12,9 +13,14 @@ function createWindow(): void {
     });
 
     if (process.env.NODE_ENV === "dev") {
-        mainWindow.loadURL("http://localhost:5173");
+        // Vite 서버의 포트를 환경 변수에서 가져오거나 기본값 사용
+        const port = process.env.VITE_PORT || "5173";
+
+        mainWindow.loadURL(`http://localhost:${port}`);
     } else {
-        mainWindow.loadFile("./dist/vue/index.html");
+        // 프로덕션 모드에서는 절대 경로를 사용
+        const indexPath = path.join(__dirname, "../vue/index.html");
+        mainWindow.loadFile(indexPath);
     }
 
     /* 개발 모드일 때 DevTools를 자동으로 열기 */
