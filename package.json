@@ -1,6 +1,6 @@
 {
     "name": "vue-project",
-    "version": "0.0.8",
+    "version": "0.1.0",
     "main": "dist/electron/main.js",
     "type": "commonjs",
     "private": true,
@@ -53,8 +53,7 @@
         },
         "win": {
             "target": [
-                "nsis",
-                "portable"
+                "nsis"
             ]
         },
         "linux": {

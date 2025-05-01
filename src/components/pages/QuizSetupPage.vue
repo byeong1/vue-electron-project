@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 
-import SingleBox from "@components/boxes/SingleBox.vue";
 import MultiButton from "@components/buttons/MultiButton.vue";
 import SingleButton from "@components/buttons/SingleButton.vue";
+import SingleBox from "@components/boxes/SingleBox.vue";
 
-import { generateQuiz } from "@api/services/ollamaService";
+import { generateQuizWithAuth, generateQuizWithoutAuth } from "@api/services/ollamaService";
+import { getUserInfo } from "@api/services/userService";
 
-import { EDUCATION_STAGE, GRADE } from "@constants";
+import { EDUCATION_STAGE, GRADE } from "@/constants";
 
-import type { IQuizData, IButtonOption } from "@types";
+import type { IQuizData, IButtonOption } from "@/types";
 
 /* 타입 정의 */
 type NavigationQuery = {
@@ -45,11 +46,18 @@ const selectedGrade = ref<string | null>(null);
 
 const isLoading = ref<boolean>(false);
 
+const userName = ref("");
+const stage = ref("");
+const grade = ref("");
+
+const isComponentMounted = ref(true);
+
 /* 계산된 속성 */
 const isStageSelected = computed<boolean>(() => selectedStageButton.value !== null);
 const isGradeSelected = computed<boolean>(() => selectedGradeButton.value !== null);
 
 const isGradeSelectorEnabled = computed<boolean>(() => isStageSelected.value);
+const isLoggedIn = computed(() => !!localStorage.getItem("access_token"));
 
 /* 메서드 */
 const handleStageSelect = (index: number, label: string, value: string): void => {
@@ -72,8 +80,19 @@ const navigateToQuiz = async (): Promise<void> => {
 
     try {
         isLoading.value = true;
+        let quizData: IQuizData;
+        const token = localStorage.getItem("access_token");
+        if (token) {
+            quizData = await generateQuizWithAuth(selectedStage.value, selectedGrade.value, token);
+        } else {
+            quizData = await generateQuizWithoutAuth(selectedStage.value, selectedGrade.value);
+        }
 
-        const quizData: IQuizData = await generateQuiz(selectedStage.value, selectedGrade.value);
+        // 컴포넌트가 언마운트되었다면 라우팅하지 않음
+        if (!isComponentMounted.value) {
+            console.log("Component unmounted, ignoring quiz response");
+            return;
+        }
 
         const query: NavigationQuery = {
             stage: selectedStage.value,
@@ -84,99 +103,277 @@ const navigateToQuiz = async (): Promise<void> => {
 
         router.push({ path: "/quiz/play", query });
     } catch (error) {
-        console.error("퀴즈 생성 실패:", error);
-        alert("문제 생성에 실패했습니다. 다시 시도해주세요.");
+        if (isComponentMounted.value) {
+            console.error("퀴즈 생성 실패:", error);
+            alert("문제 생성에 실패했습니다. 다시 시도해주세요.");
+        }
     } finally {
-        isLoading.value = false;
+        if (isComponentMounted.value) {
+            isLoading.value = false;
+        }
     }
 };
+
+const checkLoginAndAutoGenerate = async (): Promise<void> => {
+    const token = localStorage.getItem("access_token");
+
+    if (!token) return;
+
+    try {
+        const userInfo = await getUserInfo(token);
+        userName.value = userInfo.userName;
+        stage.value = userInfo.stage;
+        grade.value = userInfo.grade;
+
+        if (userInfo.stage && userInfo.grade) {
+            selectedStage.value = userInfo.stage;
+            selectedGrade.value = userInfo.grade;
+
+            // 버튼 인덱스 설정
+            selectedStageButton.value = STAGE_BUTTONS.findIndex(
+                (btn) => btn.value === userInfo.stage,
+            );
+            selectedGradeButton.value = GRADE_BUTTONS.findIndex(
+                (btn) => btn.value === userInfo.grade,
+            );
+
+            // 자동으로 문제 생성
+            await navigateToQuiz();
+        }
+    } catch (error) {
+        console.error("사용자 정보 조회 실패:", error);
+    }
+};
+
+onMounted(() => {
+    checkLoginAndAutoGenerate();
+});
+
+onUnmounted(() => {
+    isComponentMounted.value = false;
+});
 </script>
 
 <template>
-    <div class="container">
-        <div class="main-text">교육 단계 / 학년을 선택하세요!</div>
-
-        <MultiButton
-            class="stage-selector"
-            :buttons="STAGE_BUTTONS"
-            @button-click="handleStageSelect"
-            :selected-button="selectedStageButton"
-        />
-
-        <MultiButton
-            v-if="isGradeSelectorEnabled"
-            class="grade-selector"
-            :buttons="GRADE_BUTTONS"
-            @button-click="handleGradeSelect"
-            :selected-button="selectedGradeButton"
-        />
-
-        <SingleButton
-            v-if="isGradeSelected"
-            class="create-button"
-            color="black"
-            :label="isLoading ? '문제 생성 중...' : '문제 생성'"
-            :disabled="isLoading"
-            @click="navigateToQuiz"
-        />
+    <div class="quiz-setup-page">
+        <SingleBox variant="outlined" class="setup-box">
+            <h1 class="title">교육 단계 / 학년을 선택하세요!</h1>
+            <p v-if="!isLoggedIn" class="subtitle">
+                AI에게 문제를 학습시키기 위해서는 <span class="highlight">로그인</span>이
+                필요합니다.
+            </p>
+            <div v-if="isLoading" class="notice loading-notice">
+                <div class="notice-text">
+                    <template v-if="isLoggedIn">
+                        <span class="highlight">{{ userName }}</span
+                        >님의 학습 정보 (<span class="highlight">{{ stage }} {{ grade }}</span
+                        >)에 맞춰 문제를 생성하고 있습니다.
+                    </template>
+                    <template v-else> 문제를 생성하고 있습니다. </template>
+                </div>
+                <div class="sub-notice">잠시만 기다려주세요...</div>
+            </div>
+            <div class="selector-container">
+                <MultiButton
+                    class="stage-selector"
+                    :buttons="STAGE_BUTTONS"
+                    @button-click="handleStageSelect"
+                    :selected-button="selectedStageButton"
+                    :disabled-buttons="isLoading ? STAGE_BUTTONS.map((btn) => btn.value) : []"
+                />
+                <MultiButton
+                    v-if="isGradeSelectorEnabled"
+                    class="grade-selector"
+                    :buttons="GRADE_BUTTONS"
+                    @button-click="handleGradeSelect"
+                    :selected-button="selectedGradeButton"
+                    :disabled-buttons="isLoading ? GRADE_BUTTONS.map((btn) => btn.value) : []"
+                />
+            </div>
+            <div class="create-button-container">
+                <SingleButton
+                    v-if="isGradeSelected"
+                    class="create-button"
+                    color="black"
+                    :label="isLoading ? '문제 생성 중...' : '문제 생성'"
+                    :disabled="isLoading"
+                    @click="navigateToQuiz"
+                />
+            </div>
+        </SingleBox>
     </div>
 </template>
 
 <style scoped>
-.container {
+.quiz-setup-page {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 40px;
+    padding: 20px;
+    min-height: calc(100vh - 100px);
 }
 
-.main-text {
-    font-size: 30px;
+.title {
+    font-size: 2rem;
     font-weight: 900;
-    border-bottom: 2px solid black;
-    margin-bottom: 20px;
-    padding-bottom: 30px;
+    color: var(--text-color);
+    text-align: center;
+    margin: 0;
+    transition: color 0.3s ease;
 }
 
-.stage-selector,
-.grade-selector {
+.subtitle {
+    text-align: center;
+    color: var(--text-secondary, #b0b0b0);
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 2rem 0 2.5rem 0;
+    line-height: 1.6;
+    letter-spacing: 0.2px;
+}
+
+.setup-box {
+    width: 100%;
+    max-width: 800px;
+    padding: 2rem;
     display: flex;
-    justify-content: center;
-    gap: 16px;
+    flex-direction: column;
+    gap: 2rem;
 }
 
-.stage-selector {
-    margin-top: 30px;
+.notice-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    margin-top: 2rem;
 }
 
-.grade-selector {
-    margin-top: 20px;
-}
-
-.create-button {
-    margin-top: 30px;
-}
-
-.stage-selector .button {
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
+.notice {
+    padding: 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    text-align: center;
     transition: all 0.3s ease;
 }
 
-.stage-selector .button.selected {
-    background-color: #f39c12;
-    color: white;
+.login-notice {
+    background-color: var(--button-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
 }
 
-.stage-selector .button:hover {
-    background-color: #bdc3c7;
+.loading-notice {
+    background-color: var(--button-secondary);
+    border: 1px solid var(--button-primary);
+    color: var(--text-color);
+}
+
+.notice-text {
+    margin-bottom: 0.5rem;
+}
+
+.sub-notice {
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.highlight {
+    color: var(--button-primary);
+    font-weight: 600;
+}
+
+.selector-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.selector-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+
+.create-button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.create-button {
+    width: 200px;
+    padding: 15px 30px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    background-color: var(--button-primary);
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(231, 76, 60, 0.2);
+}
+
+.create-button::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition:
+        width 0.6s ease,
+        height 0.6s ease;
+}
+
+.create-button:hover::before {
+    width: 300%;
+    height: 300%;
+}
+
+.create-button:hover {
+    background-color: var(--button-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+}
+
+.create-button:disabled {
+    background-color: var(--button-disabled);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.create-button:disabled::before {
+    display: none;
 }
 
 @media (max-width: 768px) {
-    SingleBox {
-        width: 100%;
-        max-width: 100%;
-        height: auto;
+    .title {
+        font-size: 1.5rem;
+    }
+
+    .setup-box {
+        padding: 1.5rem;
+    }
+
+    .selector-container {
+        gap: 1rem;
+    }
+
+    .create-button {
+        width: 180px;
+        padding: 12px 24px;
+        font-size: 1rem;
     }
 }
 </style>

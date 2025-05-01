@@ -1,11 +1,8 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-    baseURL: "http://localhost:11434/api",
+    baseURL: import.meta.env.VITE_BACK_END_SERVER,
     timeout: 3600000,
-    headers: {
-        "Content-Type": "application/json",
-    },
 });
 
 /* 요청 인터셉터 */

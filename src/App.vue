@@ -1,28 +1,48 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import NavBar from "@components/navigation/NavBar.vue";
+import { isLoggedIn, updateLoginStatus } from "@/stores/auth";
+import { isDarkMode, toggleDarkMode } from "@/stores/theme";
+import "@/styles/common.css";
 
 const router = useRouter();
 const route = useRoute();
 
-const tabs = [
-    { label: "홈", value: "quiz", icon: "🏠" },
-    { label: "문제 풀기", value: "quizSetup", icon: "🔍" },
-    { label: "오늘의 운세", value: "fortune", icon: "❤️" },
-    { label: "내정보", value: "profile", icon: "👤" },
-];
+/* 탭 선택 시 사용 될 값 */
+const tapValue = {
+    HOME: "quiz",
+    QUIZ: "quiz/setup",
+    FORTUNE: "fortune",
+    PROFILE: "profile",
+    REGISTER: "register",
+    LOGIN: "login",
+};
 
-const selectedTab = ref("quiz");
+watch(
+    () => localStorage.getItem("access_token"),
+    (newToken) => {
+        updateLoginStatus(!!newToken);
+    },
+);
+
+const mainTabs = computed(() => [
+    { label: "홈", value: tapValue.HOME, icon: "📝" },
+    { label: "문제 풀기", value: tapValue.QUIZ, icon: "✏️" },
+    { label: "운세 보기", value: tapValue.FORTUNE, icon: "🎯" },
+    { label: "테마 모드", value: "theme", icon: isDarkMode.value ? "🌙" : "☀️" },
+]);
+
+const selectedTab = ref(tapValue.HOME);
 
 /* 라우트 변경 시 탭 상태 동기화 */
 watch(
     () => route.path,
     (path) => {
-        if (path === "/quiz") selectedTab.value = "quiz";
-        else if (path.startsWith("/quiz/setup")) selectedTab.value = "quizSetup";
-        else if (path.startsWith("/fortune")) selectedTab.value = "fortune";
-        else if (path.startsWith("/profile")) selectedTab.value = "profile";
+        if (path === `/${tapValue.HOME}`) selectedTab.value = tapValue.HOME;
+        else if (path.startsWith(`/${tapValue.QUIZ}`)) selectedTab.value = tapValue.QUIZ;
+        else if (path.startsWith(`/${tapValue.FORTUNE}`)) selectedTab.value = tapValue.FORTUNE;
+        else if (path.startsWith(`/${tapValue.PROFILE}`)) selectedTab.value = tapValue.PROFILE;
     },
     { immediate: true },
 );
@@ -30,55 +50,110 @@ watch(
 /* 탭 클릭 시 라우팅 */
 const onTabChange = (value: string): void => {
     selectedTab.value = value;
-    if (value === "quiz") router.push("/quiz");
-    else if (value === "quizSetup") router.push("/quiz/setup");
-    else if (value === "fortune") router.push("/fortune");
-    else if (value === "profile") router.push("/profile");
+    if (value === tapValue.HOME) router.push(`/${tapValue.HOME}`);
+    else if (value === tapValue.QUIZ) router.push(`/${tapValue.QUIZ}`);
+    else if (value === tapValue.FORTUNE) router.push(`/${tapValue.FORTUNE}`);
+    else if (value === tapValue.PROFILE) router.push(`/${tapValue.PROFILE}`);
+    else if (value === tapValue.LOGIN) router.push(`/${tapValue.LOGIN}`);
+    else if (value === tapValue.REGISTER) router.push(`/${tapValue.REGISTER}`);
 };
 
-router.push("/quiz");
+const handleLogout = async () => {
+    // 로컬 스토리지에서 토큰 제거
+    localStorage.removeItem("access_token");
+    // 로그인 상태 업데이트
+    updateLoginStatus(false);
+    // 메인 페이지로 이동
+    await router.push(`/${tapValue.HOME}`);
+};
+
+const handleLogin = () => {
+    router.push(`/${tapValue.PROFILE}`);
+};
+
+const handleRegister = () => {
+    router.push(`/${tapValue.REGISTER}`);
+};
+
+const handleMyProfile = () => {
+    router.push(`/${tapValue.PROFILE}`);
+};
+
+// 새로운 핸들러 함수들
+const handleMainButton = () => {
+    if (isLoggedIn.value) {
+        handleMyProfile();
+    } else {
+        handleLogin();
+    }
+};
+
+const handleSecondaryButton = () => {
+    if (isLoggedIn.value) {
+        handleLogout();
+    } else {
+        handleRegister();
+    }
+};
+
+router.push(`/${tapValue.HOME}`);
 </script>
 
 <template>
-    <div class="app-layout">
-        <NavBar v-model="selectedTab" :tabs="tabs" @update:modelValue="onTabChange" />
-        <div class="main-content">
+    <div class="app-container">
+        <NavBar
+            :tabs="mainTabs"
+            :selected-tab="selectedTab"
+            @tab-change="onTabChange"
+            :is-logged-in="isLoggedIn"
+            :is-dark-mode="isDarkMode"
+            @toggle-theme="toggleDarkMode"
+            @logout="handleLogout"
+        />
+        <main class="main-content">
             <router-view />
-        </div>
+        </main>
     </div>
 </template>
 
 <style>
-html,
-body,
-#app {
-    background-color: antiquewhite;
+.app-container {
     min-height: 100vh;
-    margin: 0;
-    padding: 0;
-}
-
-.app-layout {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    background-color: antiquewhite;
+    background-color: var(--bg-color);
+    transition: all 0.3s ease;
+    padding-top: 0;
 }
 
 .main-content {
-    flex: 1;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 100px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    min-height: calc(100vh - 80px);
 }
 
-.logo {
-    width: 400px;
-    height: 400px;
-    object-fit: contain;
-    display: block;
-    margin: 40px auto 20px auto;
+/* Reset default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        padding: 20px;
+    }
 }
 </style>

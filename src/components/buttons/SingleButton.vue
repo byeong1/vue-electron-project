@@ -2,6 +2,7 @@
 interface Props {
     label: string;
     color: string;
+    disabled?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -12,7 +13,12 @@ const emit = defineEmits<{
 </script>
 
 <template>
-    <button class="single-button" :class="[`button-${props.color}`]" @click="emit('click')">
+    <button
+        class="single-button"
+        :class="[`button-${props.color}`, { disabled: props.disabled }]"
+        @click="emit('click')"
+        :disabled="props.disabled"
+    >
         {{ props.label }}
     </button>
 </template>
@@ -31,12 +37,12 @@ const emit = defineEmits<{
 }
 
 .button-black {
-    background-color: #2c3e50;
+    background-color: #e74c3c;
     color: white;
 }
 
 .button-black:hover {
-    background-color: #34495f;
+    background-color: #c0392b;
 }
 
 .button-white {
@@ -47,6 +53,15 @@ const emit = defineEmits<{
 
 .button-white:hover {
     background-color: #f8f9fa;
+}
+
+.single-button.disabled,
+.single-button[disabled] {
+    background-color: #e0e0e0 !important;
+    color: #999 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    border: none !important;
 }
 
 @media (max-width: 768px) {

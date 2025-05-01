@@ -1,17 +1,25 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 
 import SingleBox from "@components/boxes/SingleBox.vue";
 import MultiButton from "@components/buttons/MultiButton.vue";
 
-import { generateQuiz } from "@api/services/ollamaService";
+import { generateQuizWithAuth, generateQuizWithoutAuth } from "@api/services/ollamaService";
+import { saveLearningQuiz } from "@api/services/learningQuizService";
 
-import { EDUCATION_STAGE, GRADE, QUIZ_BUTTON } from "@constants";
+import { EDUCATION_STAGE, GRADE } from "@constants";
 
 import type { IQuizData, IButtonOption } from "@types";
 
 /* 상수 정의 */
+const QUIZ_BUTTON = {
+    HINT: "힌트 보기",
+    ANSWER: "정답 보기",
+    NEXT: "다음 문제",
+    LEARN: "문제 학습",
+};
+
 const QUIZ_BUTTONS: IButtonOption[] = [
     {
         label: QUIZ_BUTTON.HINT,
@@ -24,9 +32,15 @@ const QUIZ_BUTTONS: IButtonOption[] = [
         color: "white",
     },
     {
-        label: "다음 문제",
-        value: "NEXT",
+        label: QUIZ_BUTTON.NEXT,
+        value: QUIZ_BUTTON.NEXT,
         color: "white",
+    },
+    {
+        label: QUIZ_BUTTON.LEARN,
+        value: QUIZ_BUTTON.LEARN,
+        color: "white",
+        disabledLabel: "학습 완료",
     },
 ];
 
@@ -36,20 +50,29 @@ const route = useRoute();
 
 const selectedButton = ref<number | null>(null);
 const selectedButtonValue = ref<string | null>(null);
+
 const isLoading = ref<boolean>(false);
+
+const isLearnCompleted = ref<boolean>(false);
 
 const stage = ref<string | null>((route.query.stage as string) || null);
 const grade = ref<string | null>((route.query.grade as string) || null);
 
 const currentQuiz = ref<IQuizData | null>(null);
 
+/* 계산된 속성 */
+const isLoggedIn = computed<boolean>(() => {
+    return !!localStorage.getItem("access_token");
+});
+
 /* 메서드 */
-const handleButtonClick = (index: number, label: string, value: string): void => {
-    if (value === QUIZ_BUTTON.BACK) {
-        router.push("/");
-        return;
-    } else if (value === "NEXT") {
+const handleButtonClick = async (index: number, label: string, value: string): Promise<void> => {
+    if (value === QUIZ_BUTTON.NEXT) {
         generateNextQuiz();
+        return;
+    } else if (value === QUIZ_BUTTON.LEARN) {
+        if (isLearnCompleted.value) return;
+        await handleLearnClick();
         return;
     } else if (selectedButton.value === index) {
         selectedButton.value = null;
@@ -60,30 +83,49 @@ const handleButtonClick = (index: number, label: string, value: string): void =>
     }
 };
 
+/* 문제 학습 버튼 */
+const handleLearnClick = async (): Promise<void> => {
+    if (!currentQuiz.value || isLearnCompleted.value) return;
+
+    try {
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+
+        await saveLearningQuiz(token, { quiz: currentQuiz.value.quiz });
+
+        isLearnCompleted.value = true;
+
+        alert("문제가 학습 목록에 추가되었습니다.");
+    } catch (error) {
+        console.error("문제 학습 저장 실패:", error);
+        alert("문제 학습 저장에 실패했습니다.");
+    }
+};
+
+/* 다음 문제 생성 버튼 */
 const generateNextQuiz = async (): Promise<void> => {
     isLoading.value = true;
     try {
-        const nestQuizData: IQuizData = await generateQuiz(
-            stage.value,
-            grade.value,
-            currentQuiz.value?.quiz,
-        );
+        let nestQuizData: IQuizData;
+        const token = localStorage.getItem("access_token");
+        if (token) {
+            nestQuizData = await generateQuizWithAuth(stage.value, grade.value, token);
+        } else {
+            nestQuizData = await generateQuizWithoutAuth(stage.value, grade.value);
+        }
 
         sessionStorage.setItem("currentQuiz", JSON.stringify(nestQuizData));
 
-        // 상태 초기화
+        /* 상태 초기화 */
         selectedButton.value = null;
         selectedButtonValue.value = null;
-        currentQuiz.value = nestQuizData;
 
-        // 같은 경로로 이동
-        router.push({
-            path: "/quiz/play",
-            query: {
-                stage: stage.value,
-                grade: grade.value,
-            },
-        });
+        isLearnCompleted.value = false;
+
+        currentQuiz.value = nestQuizData;
     } catch (error) {
         console.error("퀴즈 생성 중 오류 발생:", error);
 
@@ -93,6 +135,7 @@ const generateNextQuiz = async (): Promise<void> => {
     }
 };
 
+/* 유효한 학습 단계와 학년 검증 */
 const validateStageAndGrade = (): boolean => {
     const isValidStage = stage.value ? Object.values(EDUCATION_STAGE).includes(stage.value) : false;
     const isValidGrade = grade.value ? Object.values(GRADE).includes(grade.value) : false;
@@ -100,6 +143,7 @@ const validateStageAndGrade = (): boolean => {
     return isValidStage && isValidGrade;
 };
 
+/* 세션에서 퀴즈 데이터 로드 */
 const loadQuizFromSession = (): void => {
     const quizData: string | null = sessionStorage.getItem("currentQuiz");
     if (quizData) {
@@ -134,12 +178,17 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="container">
-        <SingleBox v-if="currentQuiz && !isLoading" class="quiz-box">
-            <div class="quiz-info">{{ currentQuiz.difficulty }} - {{ currentQuiz.topic }}</div>
+    <div class="quiz-play-page">
+        <SingleBox v-if="currentQuiz && !isLoading" variant="outlined" class="quiz-box">
+            <div class="quiz-header">
+                <div class="quiz-info">
+                    <span class="difficulty">{{ currentQuiz.difficulty }}</span>
+                    <span class="topic">{{ currentQuiz.topic }}</span>
+                </div>
+            </div>
 
-            <div class="quiz-text">
-                {{ currentQuiz.quiz }}
+            <div class="quiz-content">
+                <p class="quiz-text">{{ currentQuiz.quiz }}</p>
             </div>
         </SingleBox>
 
@@ -147,51 +196,81 @@ onMounted(() => {
             {{ isLoading ? "문제 생성 중..." : "문제를 불러오는 중..." }}
         </div>
 
-        <div v-if="currentQuiz && !isLoading" class="quiz-button">
+        <div v-if="currentQuiz && !isLoading" class="quiz-actions">
             <MultiButton
-                :buttons="QUIZ_BUTTONS"
+                :buttons="
+                    isLoggedIn
+                        ? QUIZ_BUTTONS
+                        : QUIZ_BUTTONS.filter((btn) => btn.value !== QUIZ_BUTTON.LEARN)
+                "
                 @button-click="handleButtonClick"
                 :selected-button="selectedButton"
+                :disabled-buttons="isLearnCompleted ? [QUIZ_BUTTON.LEARN] : []"
             />
         </div>
 
-        <SingleBox v-if="selectedButtonValue && currentQuiz && !isLoading" class="answer-box">
-            <div class="answer-text">
-                {{
-                    selectedButtonValue === QUIZ_BUTTON.HINT ? currentQuiz.hint : currentQuiz.answer
-                }}
+        <SingleBox
+            v-if="selectedButtonValue && currentQuiz && !isLoading"
+            variant="outlined"
+            class="answer-box"
+        >
+            <div class="answer-content">
+                <p class="answer-text">
+                    {{
+                        selectedButtonValue === QUIZ_BUTTON.HINT
+                            ? currentQuiz.hint
+                            : currentQuiz.answer
+                    }}
+                </p>
             </div>
         </SingleBox>
     </div>
 </template>
 
 <style scoped>
-.container {
+.quiz-play-page {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 2rem;
+    width: 100%;
 }
 
 .quiz-box {
     width: 100%;
-    max-width: 500px;
-    height: auto;
-    margin-top: 20px;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
+    max-width: 800px;
+}
+
+.quiz-header {
+    margin-bottom: 2rem;
+}
+
+.quiz-info {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.difficulty {
+    color: var(--button-primary);
+    font-weight: 600;
+}
+
+.topic {
+    color: var(--text-color);
+}
+
+.quiz-content {
+    text-align: center;
 }
 
 .quiz-text {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    font-size: 20px;
-    font-weight: 500;
-    padding: 20px;
-    line-height: 1.5;
-    color: #333;
+    font-size: 1.5rem;
+    line-height: 1.6;
+    color: var(--text-color);
     word-break: keep-all;
+    white-space: pre-line;
 }
 
 .loading {
@@ -199,53 +278,45 @@ onMounted(() => {
     justify-content: center;
     align-items: center;
     height: 200px;
-    font-size: 20px;
-    color: #666;
+    font-size: 1.2rem;
+    color: var(--text-color);
 }
 
-.quiz-button {
-    margin: 30px auto;
+.quiz-actions {
+    width: 100%;
+    max-width: 800px;
     display: flex;
     justify-content: center;
-    gap: 16px;
 }
 
 .answer-box {
-    margin-top: 20px;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    position: relative;
+    width: 100%;
+    max-width: 800px;
 }
 
-.answer-box::before {
-    content: "";
-    position: absolute;
-    top: -20px;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background-color: black;
-    width: 100%;
+.answer-content {
+    text-align: center;
 }
 
 .answer-text {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    font-size: 18px;
-    padding: 20px;
-    line-height: 1.5;
-    color: #495057;
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: var(--text-color);
     word-break: keep-all;
     white-space: pre-line;
 }
 
 @media (max-width: 768px) {
-    SingleBox {
-        width: 100%;
-        max-width: 100%;
-        height: auto;
+    .quiz-text {
+        font-size: 1.2rem;
+    }
+
+    .quiz-info {
+        font-size: 1rem;
+    }
+
+    .answer-text {
+        font-size: 1rem;
     }
 }
 </style>

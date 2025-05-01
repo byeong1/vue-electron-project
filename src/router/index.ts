@@ -4,6 +4,10 @@ import MainPage from "@components/pages/MainPage.vue";
 import QuizSetupPage from "@components/pages/QuizSetupPage.vue";
 import QuizPlayPage from "@components/pages/QuizPlayPage.vue";
 import FortunePage from "@components/pages/FortunePage.vue";
+import LoginPage from "@components/pages/LoginPage.vue";
+import MainAfterLogin from "@components/pages/MainAfterLogin.vue";
+import ProfilePage from "@components/pages/ProfilePage.vue";
+import RegisterPage from "@components/pages/RegisterPage.vue";
 
 const routes = [
     /* 메인 화면 */
@@ -34,6 +38,10 @@ const routes = [
         name: "FortunePage",
         component: FortunePage,
     },
+    { path: "/login", name: "LoginPage", component: LoginPage },
+    { path: "/main", name: "MainAfterLogin", component: MainAfterLogin },
+    { path: "/profile", name: "ProfilePage", component: ProfilePage },
+    { path: "/register", name: "RegisterPage", component: RegisterPage },
 ];
 
 const router = createRouter({
