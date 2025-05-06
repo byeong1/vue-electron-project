@@ -2,65 +2,50 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import SingleBox from "@components/boxes/SingleBox.vue";
-import { register } from "@api/services/authService";
+import { login } from "@api/services/authService";
+import { updateLoginStatus } from "@/stores/auth";
 import { isDarkMode, toggleDarkMode } from "@/stores/theme";
 
 const router = useRouter();
 const accountId = ref("");
-const userName = ref("");
 const password = ref("");
-const grade = ref("");
-const stage = ref("");
-
 const isLoading = ref(false);
 
-const stageOptions = ["초등학생", "중학생", "고등학생"];
-const gradeOptions = ["1학년", "2학년", "3학년"];
-
-const handleRegister = async () => {
-    if (!accountId.value || !userName.value || !password.value || !grade.value || !stage.value) {
-        alert("아이디, 이름, 비밀번호, 학년, 교육 단계를 입력하세요.");
+const handleLogin = async () => {
+    if (!accountId.value || !password.value) {
+        alert("아이디와 비밀번호를 입력하세요.");
         return;
     }
-
     isLoading.value = true;
-
     try {
-        const res: any = await register({
+        const res = await login({
             accountId: accountId.value,
-            userName: userName.value,
             password: password.value,
-            grade: grade.value,
-            stage: stage.value,
         });
 
-        localStorage.setItem("access_token", res.data.access_token);
-
-        router.push("/quiz");
-    } catch (error: any) {
-        let message = "회원가입에 실패했습니다.";
-        if (error.response && error.response.data && error.response.data.message) {
-            if (Array.isArray(error.response.data.message)) {
-                message = error.response.data.message.join("\n");
-            } else {
-                message = error.response.data.message;
-            }
+        if (res.access_token) {
+            localStorage.setItem("access_token", res.access_token);
+            updateLoginStatus(true);
+            router.push("/quiz");
+        } else {
+            alert("로그인에 실패했습니다. 아이디와 비밀번호를 확인하세요.");
         }
-        alert(message);
+    } catch (e) {
+        alert("로그인에 실패했습니다. 아이디와 비밀번호를 확인하세요.");
     } finally {
         isLoading.value = false;
     }
 };
 
 const goToHome = () => {
-    router.push("/quiz");
+    router.push("/");
 };
 </script>
 
 <template>
-    <div class="register-page" :class="{ 'dark-mode': isDarkMode }">
+    <div class="login-page" :class="{ 'dark-mode': isDarkMode }">
         <div class="container">
-            <SingleBox class="register-box" :width="479">
+            <SingleBox class="login-box">
                 <div class="theme-toggle" @click="toggleDarkMode">
                     <span class="theme-icon">{{ isDarkMode ? "🌙" : "☀️" }}</span>
                 </div>
@@ -77,25 +62,6 @@ const goToHome = () => {
                         :disabled="isLoading"
                     />
                     <input
-                        v-model="userName"
-                        type="text"
-                        placeholder="이름"
-                        class="input"
-                        :disabled="isLoading"
-                    />
-                    <select v-model="stage" class="input" :disabled="isLoading">
-                        <option value="" disabled selected>교육 단계 선택</option>
-                        <option v-for="option in stageOptions" :key="option" :value="option">
-                            {{ option }}
-                        </option>
-                    </select>
-                    <select v-model="grade" class="input" :disabled="isLoading">
-                        <option value="" disabled selected>학년 선택</option>
-                        <option v-for="option in gradeOptions" :key="option" :value="option">
-                            {{ option }}
-                        </option>
-                    </select>
-                    <input
                         v-model="password"
                         type="password"
                         placeholder="비밀번호"
@@ -103,15 +69,15 @@ const goToHome = () => {
                         :disabled="isLoading"
                     />
                 </div>
-                <button class="register-button" @click="handleRegister" :disabled="isLoading">
-                    {{ isLoading ? "회원가입 중..." : "회원가입" }}
+                <button class="login-button" @click="handleLogin" :disabled="isLoading">
+                    {{ isLoading ? "로그인 중..." : "로그인" }}
                 </button>
                 <button
-                    class="login-link"
-                    @click="() => router.push('/login')"
+                    class="register-link"
+                    @click="() => router.push('/register')"
                     :disabled="isLoading"
                 >
-                    로그인으로 돌아가기
+                    회원가입
                 </button>
             </SingleBox>
         </div>
@@ -119,18 +85,21 @@ const goToHome = () => {
 </template>
 
 <style scoped>
-.register-page {
+.login-page {
     position: fixed;
     top: 0;
     left: 0;
+    min-height: 100vh;
     width: 100%;
-    height: 100%;
     background-color: var(--bg-color, #f5f6f7);
-    z-index: 1000;
+    z-index: 9999;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.register-page.dark-mode {
+.login-page.dark-mode {
     --bg-color: #1a1a1a;
     --text-color: #ffffff;
     --box-bg: #2d2d2d;
@@ -177,7 +146,7 @@ const goToHome = () => {
     padding: 15px;
     margin-bottom: 30px;
     border-radius: 8px;
-    transition: background-color 0.2s;
+    transition: all 0.3s ease;
 }
 
 .home-button:hover {
@@ -196,15 +165,16 @@ const goToHome = () => {
 }
 
 .container {
+    width: 100%;
+    padding: 80px 20px;
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    align-items: center;
 }
 
-.register-box {
+.login-box {
     position: relative;
+    width: 400px;
     padding: 40px;
     background: var(--box-bg, white);
     border: 1px solid var(--border-color, #ddd);
@@ -213,6 +183,13 @@ const goToHome = () => {
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+.login-box h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 24px;
+    color: #333;
 }
 
 .input-group {
@@ -224,11 +201,18 @@ const goToHome = () => {
     width: 100%;
     margin: 8px 0;
     padding: 15px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color, #ddd);
     border-radius: 8px;
     font-size: 16px;
-    transition: border-color 0.2s;
+    background-color: var(--input-bg, white);
+    color: var(--input-text, #333);
+    transition: all 0.3s ease;
     box-sizing: border-box;
+}
+
+.input::placeholder {
+    color: var(--placeholder-color, #999);
+    transition: color 0.3s ease;
 }
 
 .input:focus {
@@ -236,19 +220,7 @@ const goToHome = () => {
     outline: none;
 }
 
-select.input {
-    background-color: white;
-    cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 15px center;
-    background-size: 1em;
-    padding-right: 45px;
-}
-
-.register-button {
+.login-button {
     width: 100%;
     padding: 15px;
     background: #e74c3c;
@@ -261,17 +233,17 @@ select.input {
     transition: background-color 0.2s;
 }
 
-.register-button:hover:not(:disabled) {
+.login-button:hover:not(:disabled) {
     background: #c0392b;
 }
 
-.register-button:disabled {
+.login-button:disabled {
     background: #f5f5f5;
     color: #999;
     cursor: not-allowed;
 }
 
-.login-link {
+.register-link {
     width: 100%;
     padding: 15px;
     margin-top: 10px;
@@ -285,11 +257,11 @@ select.input {
     transition: all 0.2s;
 }
 
-.login-link:hover:not(:disabled) {
+.register-link:hover:not(:disabled) {
     background: #fff5f5;
 }
 
-.login-link:disabled {
+.register-link:disabled {
     background: #f5f5f5;
     color: #999;
     border-color: #ddd;

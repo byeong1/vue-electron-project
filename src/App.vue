@@ -11,8 +11,8 @@ const route = useRoute();
 
 /* 탭 선택 시 사용 될 값 */
 const tapValue = {
-    HOME: "quiz",
-    QUIZ: "quiz/setup",
+    HOME: "main",
+    QUIZ: "quiz",
     FORTUNE: "fortune",
     PROFILE: "profile",
     REGISTER: "register",
@@ -50,7 +50,7 @@ watch(
 /* 탭 클릭 시 라우팅 */
 const onTabChange = (value: string): void => {
     selectedTab.value = value;
-    if (value === tapValue.HOME) router.push(`/${tapValue.HOME}`);
+    if (value === tapValue.HOME) router.push(`/`);
     else if (value === tapValue.QUIZ) router.push(`/${tapValue.QUIZ}`);
     else if (value === tapValue.FORTUNE) router.push(`/${tapValue.FORTUNE}`);
     else if (value === tapValue.PROFILE) router.push(`/${tapValue.PROFILE}`);

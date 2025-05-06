@@ -8,6 +8,14 @@ export const generateFortune = async (
     birthTime: string,
     fortuneType: string = "daily",
 ): Promise<IOllamaResponse> => {
+    // 한국 시간 기준 오늘 날짜 구하기
+    const now = new Date();
+    const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+    const year = kstNow.getUTCFullYear();
+    const month = String(kstNow.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(kstNow.getUTCDate()).padStart(2, "0");
+    const today = `${year}년 ${month}월 ${day}일 `;
+
     const getFortuneTypeText = (type: string): string => {
         if (type === "daily") {
             return "오늘의";
@@ -23,7 +31,7 @@ export const generateFortune = async (
     const fortuneTypeText = getFortuneTypeText(fortuneType);
 
     const prompt: string = `<start_of_turn>system
-너는 이제부터 한국 최고의 사주팔자 전문가야. 사용자의 생년월일과 시간을 기반으로 ${fortuneTypeText} 운세를 정확하게 봐줘.
+너는 이제부터 한국 최고의 사주팔자 전문가야. ${today}사용자의 생년월일과 시간을 기반으로 ${fortuneTypeText} 운세를 정확하게 봐줘.
 <end_of_turn>
 
 <start_of_turn>user
@@ -35,6 +43,7 @@ export const generateFortune = async (
 
 다음 내용을 포함해서 운세를 봐줘:
 1. ${fortuneTypeText} 전체 운세
+2. ${fortuneTypeText} 연애운
 2. ${fortuneTypeText} 금전운
 3. ${fortuneTypeText} 건강운
 4. ${fortuneTypeText} 인간관계운
@@ -43,6 +52,7 @@ export const generateFortune = async (
 반드시 다음 JSON 형식으로 응답해줘:
 {
     "overall": "${fortuneTypeText} 전체 운세 내용",
+    "love": "${fortuneTypeText} 연애운 내용",
     "money": "${fortuneTypeText} 금전운 내용",
     "health": "${fortuneTypeText} 건강운 내용",
     "relationship": "${fortuneTypeText} 인간관계운 내용",

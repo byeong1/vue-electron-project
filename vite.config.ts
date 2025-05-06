@@ -1,13 +1,19 @@
+import "dotenv/config";
 import path from "path";
 
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import vueDevTools from "vite-plugin-vue-devtools";
 
+const port = parseInt(process.env.VITE_PORT || "5173");
+
 // https://vite.dev/config/
 export default defineConfig({
     plugins: [vue(), vueDevTools()],
     base: "./",
+    server: {
+        port,
+    },
     build: {
         outDir: "dist/vue",
         assetsDir: "assets",
@@ -28,6 +34,7 @@ export default defineConfig({
             "@api": path.resolve(__dirname, "./src/api"),
             "@utils": path.resolve(__dirname, "./src/utils"),
             "@assets": path.resolve(__dirname, "./src/assets"),
+            "@pages": path.resolve(__dirname, "./src/pages"),
         },
     },
 });

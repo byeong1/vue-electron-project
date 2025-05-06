@@ -80,8 +80,11 @@ const navigateToQuiz = async (): Promise<void> => {
 
     try {
         isLoading.value = true;
+
         let quizData: IQuizData;
+
         const token = localStorage.getItem("access_token");
+
         if (token) {
             quizData = await generateQuizWithAuth(selectedStage.value, selectedGrade.value, token);
         } else {
@@ -269,6 +272,8 @@ onUnmounted(() => {
     background-color: var(--button-secondary);
     border: 1px solid var(--button-primary);
     color: var(--text-color);
+    margin-top: 1rem;
+    margin-bottom: 1rem;
 }
 
 .notice-text {

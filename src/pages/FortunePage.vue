@@ -36,6 +36,25 @@ const isValidBirthDate = computed(() => {
     return true;
 });
 
+const formattedFortuneTitle = computed(() => {
+    if (!fortune.value) return "";
+    if (
+        !birthYear.value ||
+        !birthMonth.value ||
+        !birthDay.value ||
+        !birthTime.value ||
+        selectedFortuneType.value === null
+    )
+        return "";
+    const typeLabel = fortuneTypeButtons[selectedFortuneType.value].label;
+    let hour = "";
+    let minute = "";
+    if (birthTime.value.includes(":")) {
+        [hour, minute] = birthTime.value.split(":");
+    }
+    return `${birthYear.value}년 ${birthMonth.value}월 ${birthDay.value}일 ${hour ? hour + "시" : ""}${minute ? minute + "분" : ""} ${typeLabel}`;
+});
+
 const handleFortuneTypeSelect = (index: number) => {
     selectedFortuneType.value = index;
 };
@@ -51,6 +70,7 @@ const generateFortuneResult = async () => {
         const res = await generateFortune(birthDate, birthTime.value, fortuneType);
         fortune.value = [
             { title: "전체 운세", content: res.overall },
+            { title: "연애운", content: res.love },
             { title: "금전운", content: res.money },
             { title: "건강운", content: res.health },
             { title: "인간관계운", content: res.relationship },
@@ -78,7 +98,14 @@ const resetFortune = () => {
     <div class="fortune-page">
         <SingleBox variant="outlined" class="fortune-box">
             <h1 class="title">AI 운세</h1>
-            <p class="subtitle">생년월일과 출생시간을 입력해 주세요. AI가 운세를 알려줘요!</p>
+            <p class="subtitle">
+                <template v-if="!fortune">
+                    생년월일과 출생시간을 입력해 주세요. AI가 운세를 알려줘요!
+                </template>
+                <template v-else>
+                    {{ formattedFortuneTitle }}
+                </template>
+            </p>
             <div v-if="!fortune" class="form-section">
                 <div class="birth-info-form">
                     <div class="input-group">

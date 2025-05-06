@@ -14,7 +14,7 @@ function createWindow(): void {
 
     if (process.env.NODE_ENV === "dev") {
         // Vite 서버의 포트를 환경 변수에서 가져오거나 기본값 사용
-        const port = process.env.VITE_PORT || "5173";
+        const port = process.env.ELECTRON_PORT || "5173";
 
         mainWindow.loadURL(`http://localhost:${port}`);
     } else {

@@ -1,28 +1,24 @@
-import { createRouter, createWebHashHistory } from "vue-router";
+import { createRouter, createWebHashHistory, createWebHistory } from "vue-router";
 
-import MainPage from "@components/pages/MainPage.vue";
-import QuizSetupPage from "@components/pages/QuizSetupPage.vue";
-import QuizPlayPage from "@components/pages/QuizPlayPage.vue";
-import FortunePage from "@components/pages/FortunePage.vue";
-import LoginPage from "@components/pages/LoginPage.vue";
-import MainAfterLogin from "@components/pages/MainAfterLogin.vue";
-import ProfilePage from "@components/pages/ProfilePage.vue";
-import RegisterPage from "@components/pages/RegisterPage.vue";
+import MainPage from "@pages/MainPage.vue";
+import QuizSetupPage from "@pages/QuizSetupPage.vue";
+import QuizPlayPage from "@pages/QuizPlayPage.vue";
+import FortunePage from "@pages/FortunePage.vue";
+import LoginPage from "@pages/LoginPage.vue";
+import MainAfterLogin from "@pages/MainAfterLogin.vue";
+import ProfilePage from "@pages/ProfilePage.vue";
+import RegisterPage from "@pages/RegisterPage.vue";
 
 const routes = [
-    /* 메인 화면 */
     {
-        path: "/quiz",
-        name: "MainPage",
+        path: "/",
         component: MainPage,
     },
-    /* 문제 선택 화면 */
     {
-        path: "/quiz/setup",
-        name: "QuizSetupPage",
+        path: "/quiz",
+        name: "quiz",
         component: QuizSetupPage,
     },
-    /* 문제 화면 */
     {
         path: "/quiz/play",
         name: "QuizPlayPage",
@@ -32,12 +28,7 @@ const routes = [
             grade: route.query.grade,
         }),
     },
-    /* 운세 화면 */
-    {
-        path: "/fortune",
-        name: "FortunePage",
-        component: FortunePage,
-    },
+    { path: "/fortune", name: "FortunePage", component: FortunePage },
     { path: "/login", name: "LoginPage", component: LoginPage },
     { path: "/main", name: "MainAfterLogin", component: MainAfterLogin },
     { path: "/profile", name: "ProfilePage", component: ProfilePage },
