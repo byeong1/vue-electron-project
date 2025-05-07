@@ -9,3 +9,13 @@ export const GRADE = {
     SECOND: "2학년",
     THIRD: "3학년",
 };
+
+export const ROUTE_PATH = {
+    HOME: "",
+    QUIZ: "quiz",
+    FORTUNE: "fortune",
+    PROFILE: "profile",
+    REGISTER: "register",
+    LOGIN: "login",
+    THEME: "theme",
+};

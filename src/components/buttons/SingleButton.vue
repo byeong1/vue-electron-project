@@ -1,9 +1,9 @@
 <script setup lang="ts">
-interface Props {
+type Props = {
     label: string;
     color: string;
     disabled?: boolean;
-}
+};
 
 const props = defineProps<Props>();
 

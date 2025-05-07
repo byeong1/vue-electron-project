@@ -1,6 +1,6 @@
 {
-    "name": "vue-project",
-    "version": "0.1.0",
+    "name": "vue-electron-project",
+    "version": "1.0.0",
     "main": "dist/electron/main.js",
     "type": "commonjs",
     "private": true,
@@ -40,7 +40,7 @@
         "vue-tsc": "^2.2.8"
     },
     "build": {
-        "appId": "com.vue-project.app",
+        "appId": "com.vue-electron-project.app",
         "productName": "vue-electron-project",
         "directories": {
             "output": "out"

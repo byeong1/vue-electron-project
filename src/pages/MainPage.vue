@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import SingleBox from "@components/boxes/SingleBox.vue";
+import { SingleBox } from "@/components";
 </script>
 
 <template>
     <div class="main-page">
         <h1 class="title">Vue.js 수학 문제 생성 AI 프로젝트</h1>
 
-        <img src="@assets/logo.png" alt="로고" class="logo" />
+        <img src="@/assets/logo.png" alt="로고" class="logo" />
 
         <SingleBox variant="outlined" class="info-box">
             <div class="info-title">AI 학습 안내</div>

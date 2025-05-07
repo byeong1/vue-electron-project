@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import SingleBox from "@components/boxes/SingleBox.vue";
-import { login } from "@api/services/authService";
-import { updateLoginStatus } from "@/stores/auth";
-import { isDarkMode, toggleDarkMode } from "@/stores/theme";
+
+import { SingleBox, BaseInput } from "@/components";
+
+import { login } from "@/apis";
+
+import { updateLoginStatus, isDarkMode, toggleDarkMode } from "@/stores";
+
+import type { IAuthResponse } from "@/types";
+
+import { setAccessToken, getErrorMessage, ROUTE_PATH } from "@/common";
 
 const router = useRouter();
 const accountId = ref("");
@@ -18,27 +24,29 @@ const handleLogin = async () => {
     }
     isLoading.value = true;
     try {
-        const res = await login({
+        const res: IAuthResponse = await login({
             accountId: accountId.value,
             password: password.value,
         });
 
         if (res.access_token) {
-            localStorage.setItem("access_token", res.access_token);
+            setAccessToken(res.access_token);
+
             updateLoginStatus(true);
-            router.push("/quiz");
+
+            router.push(`/${ROUTE_PATH.HOME}`);
         } else {
             alert("로그인에 실패했습니다. 아이디와 비밀번호를 확인하세요.");
         }
-    } catch (e) {
-        alert("로그인에 실패했습니다. 아이디와 비밀번호를 확인하세요.");
+    } catch (error) {
+        alert(getErrorMessage(error, "로그인에 실패했습니다. 아이디와 비밀번호를 확인하세요."));
     } finally {
         isLoading.value = false;
     }
 };
 
 const goToHome = () => {
-    router.push("/");
+    router.push(`/${ROUTE_PATH.HOME}`);
 };
 </script>
 
@@ -54,14 +62,14 @@ const goToHome = () => {
                     <span class="home-text">AI 문제은행</span>
                 </div>
                 <div class="input-group">
-                    <input
+                    <BaseInput
                         v-model="accountId"
                         type="text"
                         placeholder="아이디"
                         class="input"
                         :disabled="isLoading"
                     />
-                    <input
+                    <BaseInput
                         v-model="password"
                         type="password"
                         placeholder="비밀번호"
@@ -74,7 +82,7 @@ const goToHome = () => {
                 </button>
                 <button
                     class="register-link"
-                    @click="() => router.push('/register')"
+                    @click="() => router.push(`/${ROUTE_PATH.REGISTER}`)"
                     :disabled="isLoading"
                 >
                     회원가입

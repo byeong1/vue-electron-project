@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import SingleBox from "@components/boxes/SingleBox.vue";
-import MultiButton from "@components/buttons/MultiButton.vue";
-import { generateFortune } from "@/api/services/ollamaService";
+
+import { SingleBox, MultiButton, BaseInput } from "@/components";
+
+import { generateFortune } from "@/apis";
+import { formatDate } from "@/common";
 
 interface FortuneSection {
     title: string;
@@ -65,7 +67,7 @@ const generateFortuneResult = async () => {
     isLoading.value = true;
     fortune.value = null;
     try {
-        const birthDate = `${birthYear.value}-${String(birthMonth.value).padStart(2, "0")}-${String(birthDay.value).padStart(2, "0")}`;
+        const birthDate = formatDate(birthYear.value, birthMonth.value, birthDay.value);
         const fortuneType = fortuneTypeButtons[selectedFortuneType.value].value;
         const res = await generateFortune(birthDate, birthTime.value, fortuneType);
         fortune.value = [
@@ -109,28 +111,28 @@ const resetFortune = () => {
             <div v-if="!fortune" class="form-section">
                 <div class="birth-info-form">
                     <div class="input-group">
-                        <input
+                        <BaseInput
                             v-model="birthYear"
                             type="number"
                             placeholder="년도 (예: 1990)"
                             class="common-input"
                             :disabled="isLoading"
                         />
-                        <input
+                        <BaseInput
                             v-model="birthMonth"
                             type="number"
                             placeholder="월 (1-12)"
                             class="common-input"
                             :disabled="isLoading"
                         />
-                        <input
+                        <BaseInput
                             v-model="birthDay"
                             type="number"
                             placeholder="일 (1-31)"
                             class="common-input"
                             :disabled="isLoading"
                         />
-                        <input
+                        <BaseInput
                             v-model="birthTime"
                             type="text"
                             placeholder="출생시간 (예: 14:30, 06:00 등)"

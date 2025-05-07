@@ -28,13 +28,6 @@ export default defineConfig({
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
-            "@components": path.resolve(__dirname, "./src/components"),
-            "@constants": path.resolve(__dirname, "./src/constants"),
-            "@types": path.resolve(__dirname, "./src/types"),
-            "@api": path.resolve(__dirname, "./src/api"),
-            "@utils": path.resolve(__dirname, "./src/utils"),
-            "@assets": path.resolve(__dirname, "./src/assets"),
-            "@pages": path.resolve(__dirname, "./src/pages"),
         },
     },
 });

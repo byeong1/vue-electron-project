@@ -1,4 +1,4 @@
-import axiosInstance from "@api/config";
+import axiosInstance from "@/apis/config";
 
 export const getUserInfo = async (token: string) => {
     const response = await axiosInstance.get("/api/user/info", {

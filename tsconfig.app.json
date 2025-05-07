@@ -7,14 +7,7 @@
         "types": ["vite/client"],
         "baseUrl": ".",
         "paths": {
-            "@/*": ["src/*"],
-            "@components/*": ["src/components/*"],
-            "@constants/*": ["src/constants/*"],
-            "@types/*": ["src/types/*"],
-            "@api/*": ["src/api/*"],
-            "@utils/*": ["src/utils/*"],
-            "@assets/*": ["src/assets/*"],
-            "@pages/*": ["src/pages/*"]
+            "@/*": ["src/*"]
         }
     }
 }

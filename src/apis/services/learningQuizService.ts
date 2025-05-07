@@ -1,4 +1,4 @@
-import axiosInstance from "@api/config";
+import axiosInstance from "@/apis/config";
 
 export const saveLearningQuiz = async (token: string, payload: { quiz: string }) => {
     const response = await axiosInstance.post("/api/learning-quiz", payload, {

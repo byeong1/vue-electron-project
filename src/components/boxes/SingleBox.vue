@@ -1,9 +1,9 @@
 <script setup lang="ts">
-interface Props {
+type Props = {
     width?: number;
     height?: number;
     variant?: "default" | "outlined";
-}
+};
 
 const props = withDefaults(defineProps<Props>(), {
     width: undefined,

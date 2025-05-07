@@ -1,26 +1,30 @@
-import { createRouter, createWebHashHistory, createWebHistory } from "vue-router";
+import { createRouter, createWebHashHistory } from "vue-router";
 
-import MainPage from "@pages/MainPage.vue";
-import QuizSetupPage from "@pages/QuizSetupPage.vue";
-import QuizPlayPage from "@pages/QuizPlayPage.vue";
-import FortunePage from "@pages/FortunePage.vue";
-import LoginPage from "@pages/LoginPage.vue";
-import MainAfterLogin from "@pages/MainAfterLogin.vue";
-import ProfilePage from "@pages/ProfilePage.vue";
-import RegisterPage from "@pages/RegisterPage.vue";
+import {
+    MainPage,
+    QuizSetupPage,
+    QuizPlayPage,
+    FortunePage,
+    LoginPage,
+    ProfilePage,
+    RegisterPage,
+} from "@/pages";
+
+import { ROUTE_PATH } from "@/common";
 
 const routes = [
     {
-        path: "/",
+        path: `/${ROUTE_PATH.HOME}`,
+        name: "MainPage",
         component: MainPage,
     },
     {
-        path: "/quiz",
-        name: "quiz",
+        path: `/${ROUTE_PATH.QUIZ}`,
+        name: "QuizSetupPage",
         component: QuizSetupPage,
     },
     {
-        path: "/quiz/play",
+        path: `/${ROUTE_PATH.QUIZ}/play`,
         name: "QuizPlayPage",
         component: QuizPlayPage,
         props: (route: any) => ({
@@ -28,11 +32,10 @@ const routes = [
             grade: route.query.grade,
         }),
     },
-    { path: "/fortune", name: "FortunePage", component: FortunePage },
-    { path: "/login", name: "LoginPage", component: LoginPage },
-    { path: "/main", name: "MainAfterLogin", component: MainAfterLogin },
-    { path: "/profile", name: "ProfilePage", component: ProfilePage },
-    { path: "/register", name: "RegisterPage", component: RegisterPage },
+    { path: `/${ROUTE_PATH.FORTUNE}`, name: "FortunePage", component: FortunePage },
+    { path: `/${ROUTE_PATH.LOGIN}`, name: "LoginPage", component: LoginPage },
+    { path: `/${ROUTE_PATH.PROFILE}`, name: "ProfilePage", component: ProfilePage },
+    { path: `/${ROUTE_PATH.REGISTER}`, name: "RegisterPage", component: RegisterPage },
 ];
 
 const router = createRouter({

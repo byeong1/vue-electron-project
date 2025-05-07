@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import type { IButtonOption } from "@types/components/buttonType";
+import type { IButtonOption } from "@/types";
 
-interface Props {
+type Props = {
     buttons: IButtonOption[];
     selectedButton: number | null;
     disabledButtons?: string[];
-}
+};
 
-interface Emits {
+type Emits = {
     (e: "button-click", index: number, label: string, value: string): void;
-}
+};
 
 const props = defineProps<Props>();
 

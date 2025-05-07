@@ -2,14 +2,11 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 
-import MultiButton from "@components/buttons/MultiButton.vue";
-import SingleButton from "@components/buttons/SingleButton.vue";
-import SingleBox from "@components/boxes/SingleBox.vue";
+import { MultiButton, SingleButton, SingleBox } from "@/components";
 
-import { generateQuizWithAuth, generateQuizWithoutAuth } from "@api/services/ollamaService";
-import { getUserInfo } from "@api/services/userService";
+import { generateQuizWithAuth, generateQuizWithoutAuth, getUserInfo } from "@/apis";
 
-import { EDUCATION_STAGE, GRADE } from "@/constants";
+import { getAccessToken, ROUTE_PATH, EDUCATION_STAGE, GRADE } from "@/common";
 
 import type { IQuizData, IButtonOption } from "@/types";
 
@@ -57,7 +54,7 @@ const isStageSelected = computed<boolean>(() => selectedStageButton.value !== nu
 const isGradeSelected = computed<boolean>(() => selectedGradeButton.value !== null);
 
 const isGradeSelectorEnabled = computed<boolean>(() => isStageSelected.value);
-const isLoggedIn = computed(() => !!localStorage.getItem("access_token"));
+const isLoggedIn = computed(() => !!getAccessToken());
 
 /* 메서드 */
 const handleStageSelect = (index: number, label: string, value: string): void => {
@@ -104,12 +101,15 @@ const navigateToQuiz = async (): Promise<void> => {
 
         sessionStorage.setItem("currentQuiz", JSON.stringify(quizData));
 
-        router.push({ path: "/quiz/play", query });
+        router.push({ path: `/${ROUTE_PATH.QUIZ}/play`, query });
     } catch (error) {
         if (isComponentMounted.value) {
             console.error("퀴즈 생성 실패:", error);
+
             alert("문제 생성에 실패했습니다. 다시 시도해주세요.");
         }
+
+        router.push(`/${ROUTE_PATH.HOME}`);
     } finally {
         if (isComponentMounted.value) {
             isLoading.value = false;

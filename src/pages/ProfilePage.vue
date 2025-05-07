@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { getUserInfo, updateUserInfo } from "@api/services/userService";
+
+import { getUserInfo, updateUserInfo } from "@/apis";
+
+import { getAccessToken, getErrorMessage, ROUTE_PATH, EDUCATION_STAGE, GRADE } from "@/common";
 
 const router = useRouter();
 
@@ -18,15 +21,17 @@ const editUserName = ref("");
 const editGrade = ref("");
 const editStage = ref("");
 
-const stageOptions = ["초등학생", "중학생", "고등학생"];
-const gradeOptions = ["1학년", "2학년", "3학년"];
+const stageOptions: string[] = Object.values(EDUCATION_STAGE);
+const gradeOptions: string[] = Object.values(GRADE);
 
 const fetchUserInfo = async () => {
-    const accessToken = localStorage.getItem("access_token");
+    const accessToken = getAccessToken();
+
     if (!accessToken) {
-        router.push("/login");
+        router.push(`/${ROUTE_PATH.LOGIN}`);
         return;
     }
+
     try {
         const userInfo = await getUserInfo(accessToken);
         accountId.value = userInfo.accountId;
@@ -36,12 +41,12 @@ const fetchUserInfo = async () => {
         learningQuizs.value = userInfo.learningQuizs || [];
 
         // 이미 로그인된 상태라면 메인 페이지로 이동
-        if (router.currentRoute.value.path === "/login") {
-            router.push("/quiz");
+        if (router.currentRoute.value.path === `/${ROUTE_PATH.LOGIN}`) {
+            router.push(`/${ROUTE_PATH.HOME}`);
         }
     } catch (error) {
-        alert("유저 정보 조회에 실패했습니다. 다시 로그인 해주세요.");
-        router.push("/login");
+        alert(getErrorMessage("유저 정보 조회에 실패했습니다. 다시 로그인 해주세요."));
+        router.push(`/${ROUTE_PATH.LOGIN}`);
     }
 };
 

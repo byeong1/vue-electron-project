@@ -2,15 +2,13 @@
 import { ref, onMounted, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 
-import SingleBox from "@components/boxes/SingleBox.vue";
-import MultiButton from "@components/buttons/MultiButton.vue";
+import { SingleBox, MultiButton } from "@/components";
 
-import { generateQuizWithAuth, generateQuizWithoutAuth } from "@api/services/ollamaService";
-import { saveLearningQuiz } from "@api/services/learningQuizService";
+import { generateQuizWithAuth, generateQuizWithoutAuth, saveLearningQuiz } from "@/apis";
 
-import { EDUCATION_STAGE, GRADE } from "@constants";
+import { getAccessToken, getErrorMessage, EDUCATION_STAGE, GRADE, ROUTE_PATH } from "@/common";
 
-import type { IQuizData, IButtonOption } from "@types";
+import type { IQuizData, IButtonOption } from "@/types";
 
 /* 상수 정의 */
 const QUIZ_BUTTON = {
@@ -18,28 +16,29 @@ const QUIZ_BUTTON = {
     ANSWER: "정답 보기",
     NEXT: "다음 문제",
     LEARN: "문제 학습",
+    COLOR: "white",
 };
 
 const QUIZ_BUTTONS: IButtonOption[] = [
     {
         label: QUIZ_BUTTON.HINT,
         value: QUIZ_BUTTON.HINT,
-        color: "white",
+        color: QUIZ_BUTTON.COLOR,
     },
     {
         label: QUIZ_BUTTON.ANSWER,
         value: QUIZ_BUTTON.ANSWER,
-        color: "white",
+        color: QUIZ_BUTTON.COLOR,
     },
     {
         label: QUIZ_BUTTON.NEXT,
         value: QUIZ_BUTTON.NEXT,
-        color: "white",
+        color: QUIZ_BUTTON.COLOR,
     },
     {
         label: QUIZ_BUTTON.LEARN,
         value: QUIZ_BUTTON.LEARN,
-        color: "white",
+        color: QUIZ_BUTTON.COLOR,
         disabledLabel: "학습 완료",
     },
 ];
@@ -60,9 +59,8 @@ const grade = ref<string | null>((route.query.grade as string) || null);
 
 const currentQuiz = ref<IQuizData | null>(null);
 
-/* 계산된 속성 */
 const isLoggedIn = computed<boolean>(() => {
-    return !!localStorage.getItem("access_token");
+    return !!getAccessToken();
 });
 
 /* 메서드 */
@@ -72,7 +70,9 @@ const handleButtonClick = async (index: number, label: string, value: string): P
         return;
     } else if (value === QUIZ_BUTTON.LEARN) {
         if (isLearnCompleted.value) return;
+
         await handleLearnClick();
+
         return;
     } else if (selectedButton.value === index) {
         selectedButton.value = null;
@@ -88,9 +88,10 @@ const handleLearnClick = async (): Promise<void> => {
     if (!currentQuiz.value || isLearnCompleted.value) return;
 
     try {
-        const token = localStorage.getItem("access_token");
+        const token = getAccessToken();
+
         if (!token) {
-            alert("로그인이 필요합니다.");
+            alert(getErrorMessage("로그인이 필요합니다."));
             return;
         }
 
@@ -101,16 +102,27 @@ const handleLearnClick = async (): Promise<void> => {
         alert("문제가 학습 목록에 추가되었습니다.");
     } catch (error) {
         console.error("문제 학습 저장 실패:", error);
-        alert("문제 학습 저장에 실패했습니다.");
+        alert(getErrorMessage("문제 학습 저장에 실패했습니다."));
     }
 };
 
 /* 다음 문제 생성 버튼 */
 const generateNextQuiz = async (): Promise<void> => {
     isLoading.value = true;
+
     try {
         let nestQuizData: IQuizData;
-        const token = localStorage.getItem("access_token");
+
+        const token = getAccessToken();
+
+        if (!stage.value || !grade.value) {
+            alert(getErrorMessage("잘못된 요청입니다."));
+
+            router.push(`/${ROUTE_PATH.HOME}`);
+
+            return;
+        }
+
         if (token) {
             nestQuizData = await generateQuizWithAuth(stage.value, grade.value, token);
         } else {
@@ -122,14 +134,12 @@ const generateNextQuiz = async (): Promise<void> => {
         /* 상태 초기화 */
         selectedButton.value = null;
         selectedButtonValue.value = null;
-
         isLearnCompleted.value = false;
-
         currentQuiz.value = nestQuizData;
     } catch (error) {
         console.error("퀴즈 생성 중 오류 발생:", error);
 
-        alert("다음 문제를 생성하는데 실패했습니다.");
+        alert(getErrorMessage("다음 문제를 생성하는데 실패했습니다."));
     } finally {
         isLoading.value = false;
     }
@@ -137,8 +147,11 @@ const generateNextQuiz = async (): Promise<void> => {
 
 /* 유효한 학습 단계와 학년 검증 */
 const validateStageAndGrade = (): boolean => {
-    const isValidStage = stage.value ? Object.values(EDUCATION_STAGE).includes(stage.value) : false;
-    const isValidGrade = grade.value ? Object.values(GRADE).includes(grade.value) : false;
+    const isValidStage: boolean = stage.value
+        ? Object.values(EDUCATION_STAGE).includes(stage.value)
+        : false;
+
+    const isValidGrade: boolean = grade.value ? Object.values(GRADE).includes(grade.value) : false;
 
     return isValidStage && isValidGrade;
 };
@@ -146,29 +159,30 @@ const validateStageAndGrade = (): boolean => {
 /* 세션에서 퀴즈 데이터 로드 */
 const loadQuizFromSession = (): void => {
     const quizData: string | null = sessionStorage.getItem("currentQuiz");
+
     if (quizData) {
         try {
-            currentQuiz.value = JSON.parse(quizData) as IQuizData;
+            currentQuiz.value = JSON.parse(quizData);
         } catch (error) {
             console.error("퀴즈 데이터 파싱 실패:", error);
 
-            alert("퀴즈 데이터를 불러오는데 실패했습니다.");
+            alert(getErrorMessage("퀴즈 데이터를 불러오는데 실패했습니다."));
 
-            router.push("/");
+            router.push(`/${ROUTE_PATH.HOME}`);
         }
     } else {
-        alert("퀴즈 데이터가 없습니다.");
+        alert(getErrorMessage("퀴즈 데이터가 없습니다."));
 
-        router.push("/");
+        router.push(`/${ROUTE_PATH.HOME}`);
     }
 };
 
 /* 라이프사이클 훅 */
 onMounted(() => {
     if (!validateStageAndGrade()) {
-        alert("잘못된 요청입니다.");
+        alert(getErrorMessage("잘못된 요청입니다."));
 
-        router.push("/");
+        router.push(`/${ROUTE_PATH.HOME}`);
 
         return;
     }

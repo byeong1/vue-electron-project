@@ -1,36 +1,40 @@
-import axiosInstance from "@api/config";
+import axiosInstance from "@/apis/config";
+import { padZero } from "@/common";
 
-import type { IOllamaResponse, IQuizData } from "@types";
+import type { IQuizData } from "@/types";
 
-/* 운세 생성 */
-export const generateFortune = async (
-    birthDate: string,
-    birthTime: string,
-    fortuneType: string = "daily",
-): Promise<IOllamaResponse> => {
-    // 한국 시간 기준 오늘 날짜 구하기
+/* 운세 타입 텍스트 가져오기 */
+const getFortuneTypeText = (type: string): string => {
+    if (type === "daily") {
+        return "오늘의";
+    } else if (type === "weekly") {
+        return "이번 주의";
+    } else if (type === "monthly") {
+        return "이번 달의";
+    } else {
+        return "오늘의";
+    }
+};
+
+/* 오늘 날짜 생성 */
+const makeTodayDate = (): string => {
     const now = new Date();
     const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
     const year = kstNow.getUTCFullYear();
-    const month = String(kstNow.getUTCMonth() + 1).padStart(2, "0");
-    const day = String(kstNow.getUTCDate()).padStart(2, "0");
-    const today = `${year}년 ${month}월 ${day}일 `;
+    const month = padZero(kstNow.getUTCMonth() + 1);
+    const day = padZero(kstNow.getUTCDate());
 
-    const getFortuneTypeText = (type: string): string => {
-        if (type === "daily") {
-            return "오늘의";
-        } else if (type === "weekly") {
-            return "이번 주의";
-        } else if (type === "monthly") {
-            return "이번 달의";
-        } else {
-            return "오늘의";
-        }
-    };
+    return `${year}년 ${month}월 ${day}일 `;
+};
 
-    const fortuneTypeText = getFortuneTypeText(fortuneType);
-
-    const prompt: string = `<start_of_turn>system
+/* 운세 생성 프롬프트 */
+const makeFortunePrompt = (
+    today: string,
+    birthDate: string,
+    birthTime: string,
+    fortuneTypeText: string,
+): string => {
+    return `<start_of_turn>system
 너는 이제부터 한국 최고의 사주팔자 전문가야. ${today}사용자의 생년월일과 시간을 기반으로 ${fortuneTypeText} 운세를 정확하게 봐줘.
 <end_of_turn>
 
@@ -67,9 +71,22 @@ export const generateFortune = async (
 3. 조언의 실용성
 4. ${fortuneTypeText} 운세에 맞는 적절한 내용인지 확인
 <end_of_turn>`;
+};
 
+/* 운세 생성 */
+export const generateFortune = async (
+    birthDate: string,
+    birthTime: string,
+    fortuneType: string = "daily",
+): Promise<any> => {
     try {
-        const response = await axiosInstance.post<IOllamaResponse>("/api/llm/fortune", {
+        const today = makeTodayDate();
+
+        const fortuneTypeText = getFortuneTypeText(fortuneType);
+
+        const prompt: string = makeFortunePrompt(today, birthDate, birthTime, fortuneTypeText);
+
+        const response = await axiosInstance.post("/api/llm/fortune", {
             prompt,
         });
 
@@ -80,6 +97,7 @@ export const generateFortune = async (
     }
 };
 
+/* 문제 생성 프롬프트 */
 const makeQuizPrompt = (stage: string, grade: string): string => {
     return `<start_of_turn>system
 너는 이제부터 한국 최고의 ${stage} ${grade}학년 수학 문제 생성 AI야.
@@ -129,15 +147,16 @@ const makeQuizPrompt = (stage: string, grade: string): string => {
 <end_of_turn>`;
 };
 
-/* 로그인 사용자용 */
+/* 로그인 사용자용 문제 생성 */
 export const generateQuizWithAuth = async (
     stage: string,
     grade: string,
     token: string,
 ): Promise<IQuizData> => {
     const prompt = makeQuizPrompt(stage, grade);
+
     try {
-        const response = await axiosInstance.post<IQuizData>(
+        const response = await axiosInstance.post(
             "/api/llm/quiz",
             { prompt },
             { headers: { Authorization: `Bearer ${token}` } },
@@ -149,11 +168,12 @@ export const generateQuizWithAuth = async (
     }
 };
 
-/* 비로그인 사용자용 */
+/* 비로그인 사용자용 문제 생성 */
 export const generateQuizWithoutAuth = async (stage: string, grade: string): Promise<IQuizData> => {
     const prompt = makeQuizPrompt(stage, grade);
+
     try {
-        const response = await axiosInstance.post<IQuizData>("/api/llm/quiz/guest", { prompt });
+        const response = await axiosInstance.post("/api/llm/quiz/guest", { prompt });
         return response.data;
     } catch (error) {
         console.error("퀴즈 생성 요청 실패:", error);

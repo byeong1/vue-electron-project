@@ -1,25 +1,35 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import SingleBox from "@components/boxes/SingleBox.vue";
-import { register } from "@api/services/authService";
-import { isDarkMode, toggleDarkMode } from "@/stores/theme";
-import { updateLoginStatus } from "@/stores/auth";
+
+import { SingleBox, BaseInput } from "@/components";
+
+import { register } from "@/apis";
+
+import { isDarkMode, toggleDarkMode, updateLoginStatus } from "@/stores";
+
+import type { IAuthResponse } from "@/types";
+
+import { setAccessToken, getErrorMessage, ROUTE_PATH, EDUCATION_STAGE, GRADE } from "@/common";
 
 const router = useRouter();
+
 const accountId = ref("");
 const userName = ref("");
 const password = ref("");
 const grade = ref("");
 const stage = ref("");
 
-const isLoading = ref(false);
+const isLoading = ref<boolean>(false);
 
-const stageOptions = ["초등학생", "중학생", "고등학생"];
-const gradeOptions = ["1학년", "2학년", "3학년"];
+const stageOptions: string[] = Object.values(EDUCATION_STAGE);
+const gradeOptions: string[] = Object.values(GRADE);
 
-const handleRegister = async () => {
-    if (!accountId.value || !userName.value || !password.value || !grade.value || !stage.value) {
+const validateForm = (): boolean =>
+    Boolean(accountId.value && userName.value && password.value && grade.value && stage.value);
+
+const handleRegister = async (): Promise<void> => {
+    if (!validateForm()) {
         alert("아이디, 이름, 비밀번호, 학년, 교육 단계를 입력하세요.");
         return;
     }
@@ -27,7 +37,7 @@ const handleRegister = async () => {
     isLoading.value = true;
 
     try {
-        const res: any = await register({
+        const res: IAuthResponse = await register({
             accountId: accountId.value,
             userName: userName.value,
             password: password.value,
@@ -35,28 +45,21 @@ const handleRegister = async () => {
             stage: stage.value,
         });
 
-        localStorage.setItem("access_token", res.access_token);
+        setAccessToken(res.access_token);
+
         updateLoginStatus(true);
-        router.push("/quiz");
-    } catch (error: any) {
-        console.log("error :", error);
-        let message = "회원가입에 실패했습니다.";
-        if (error.response && error.response.data && error.response.data.message) {
-            if (Array.isArray(error.response.data.message)) {
-                message = error.response.data.message.join("\n");
-            } else {
-                message = error.response.data.message;
-            }
-        }
+
+        router.push(`/${ROUTE_PATH.QUIZ}`);
+    } catch (error) {
+        let message = getErrorMessage(error, "회원가입에 실패했습니다.");
         alert(message);
     } finally {
         isLoading.value = false;
     }
 };
 
-const goToHome = () => {
-    router.push("/");
-};
+const goToHome = () => router.push(`/${ROUTE_PATH.HOME}`);
+const goToLogin = () => router.push(`/${ROUTE_PATH.LOGIN}`);
 </script>
 
 <template>
@@ -71,14 +74,14 @@ const goToHome = () => {
                     <span class="home-text">AI 문제은행</span>
                 </div>
                 <div class="input-group">
-                    <input
+                    <BaseInput
                         v-model="accountId"
                         type="text"
                         placeholder="아이디"
                         class="input"
                         :disabled="isLoading"
                     />
-                    <input
+                    <BaseInput
                         v-model="userName"
                         type="text"
                         placeholder="이름"
@@ -86,18 +89,18 @@ const goToHome = () => {
                         :disabled="isLoading"
                     />
                     <select v-model="stage" class="input" :disabled="isLoading">
-                        <option value="" disabled selected>교육 단계 선택</option>
+                        <option value="" disabled>교육 단계 선택</option>
                         <option v-for="option in stageOptions" :key="option" :value="option">
                             {{ option }}
                         </option>
                     </select>
                     <select v-model="grade" class="input" :disabled="isLoading">
-                        <option value="" disabled selected>학년 선택</option>
+                        <option value="" disabled>학년 선택</option>
                         <option v-for="option in gradeOptions" :key="option" :value="option">
                             {{ option }}
                         </option>
                     </select>
-                    <input
+                    <BaseInput
                         v-model="password"
                         type="password"
                         placeholder="비밀번호"
@@ -108,11 +111,7 @@ const goToHome = () => {
                 <button class="register-button" @click="handleRegister" :disabled="isLoading">
                     {{ isLoading ? "회원가입 중..." : "회원가입" }}
                 </button>
-                <button
-                    class="login-link"
-                    @click="() => router.push('/login')"
-                    :disabled="isLoading"
-                >
+                <button class="login-link" @click="goToLogin" :disabled="isLoading">
                     로그인으로 돌아가기
                 </button>
             </SingleBox>

@@ -1,22 +1,22 @@
 <script setup lang="ts">
-interface Tab {
+type Tab = {
     label: string;
     value: string;
     icon: string;
-}
+};
 
-interface Props {
+type Props = {
     tabs: Tab[];
     selectedTab: string;
     isLoggedIn: boolean;
     isDarkMode: boolean;
-}
+};
 
-interface Emits {
+type Emits = {
     (e: "tab-change", value: string): void;
     (e: "toggle-theme"): void;
     (e: "logout"): void;
-}
+};
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();

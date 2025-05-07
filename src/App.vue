@@ -1,24 +1,19 @@
 <script setup lang="ts">
 import { ref, watch, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import NavBar from "@components/navigation/NavBar.vue";
-import { isLoggedIn, updateLoginStatus } from "@/stores/auth";
-import { isDarkMode, toggleDarkMode } from "@/stores/theme";
+
+import { NavBar } from "@/components";
+
+import { isLoggedIn, updateLoginStatus, isDarkMode, toggleDarkMode } from "@/stores";
+
+import { ROUTE_PATH } from "@/common";
+
 import "@/styles/common.css";
 
 const router = useRouter();
 const route = useRoute();
 
-/* 탭 선택 시 사용 될 값 */
-const tapValue = {
-    HOME: "main",
-    QUIZ: "quiz",
-    FORTUNE: "fortune",
-    PROFILE: "profile",
-    REGISTER: "register",
-    LOGIN: "login",
-};
-
+/* access_token 변경 시 로그인 상태 동기화 */
 watch(
     () => localStorage.getItem("access_token"),
     (newToken) => {
@@ -27,22 +22,23 @@ watch(
 );
 
 const mainTabs = computed(() => [
-    { label: "홈", value: tapValue.HOME, icon: "📝" },
-    { label: "문제 풀기", value: tapValue.QUIZ, icon: "✏️" },
-    { label: "운세 보기", value: tapValue.FORTUNE, icon: "🎯" },
-    { label: "테마 모드", value: "theme", icon: isDarkMode.value ? "🌙" : "☀️" },
+    { label: "홈", value: ROUTE_PATH.HOME, icon: "📝" },
+    { label: "문제 풀기", value: ROUTE_PATH.QUIZ, icon: "✏️" },
+    { label: "운세 보기", value: ROUTE_PATH.FORTUNE, icon: "🎯" },
+    { label: "테마 모드", value: ROUTE_PATH.THEME, icon: isDarkMode.value ? "🌙" : "☀️" },
 ]);
 
-const selectedTab = ref(tapValue.HOME);
+const selectedTab = ref(ROUTE_PATH.HOME);
 
 /* 라우트 변경 시 탭 상태 동기화 */
 watch(
     () => route.path,
     (path) => {
-        if (path === `/${tapValue.HOME}`) selectedTab.value = tapValue.HOME;
-        else if (path.startsWith(`/${tapValue.QUIZ}`)) selectedTab.value = tapValue.QUIZ;
-        else if (path.startsWith(`/${tapValue.FORTUNE}`)) selectedTab.value = tapValue.FORTUNE;
-        else if (path.startsWith(`/${tapValue.PROFILE}`)) selectedTab.value = tapValue.PROFILE;
+        if (path === "/" || path === `/${ROUTE_PATH.HOME}`) selectedTab.value = ROUTE_PATH.HOME;
+        else if (path.startsWith(`/${ROUTE_PATH.QUIZ}`)) selectedTab.value = ROUTE_PATH.QUIZ;
+        else if (path.startsWith(`/${ROUTE_PATH.FORTUNE}`)) selectedTab.value = ROUTE_PATH.FORTUNE;
+        else if (path.startsWith(`/${ROUTE_PATH.PROFILE}`)) selectedTab.value = ROUTE_PATH.PROFILE;
+        else selectedTab.value = "";
     },
     { immediate: true },
 );
@@ -50,53 +46,22 @@ watch(
 /* 탭 클릭 시 라우팅 */
 const onTabChange = (value: string): void => {
     selectedTab.value = value;
-    if (value === tapValue.HOME) router.push(`/`);
-    else if (value === tapValue.QUIZ) router.push(`/${tapValue.QUIZ}`);
-    else if (value === tapValue.FORTUNE) router.push(`/${tapValue.FORTUNE}`);
-    else if (value === tapValue.PROFILE) router.push(`/${tapValue.PROFILE}`);
-    else if (value === tapValue.LOGIN) router.push(`/${tapValue.LOGIN}`);
-    else if (value === tapValue.REGISTER) router.push(`/${tapValue.REGISTER}`);
+
+    if (value === ROUTE_PATH.THEME) return;
+
+    router.push(`/${value}`);
 };
 
 const handleLogout = async () => {
-    // 로컬 스토리지에서 토큰 제거
     localStorage.removeItem("access_token");
-    // 로그인 상태 업데이트
+
     updateLoginStatus(false);
-    // 메인 페이지로 이동
-    await router.push(`/${tapValue.HOME}`);
+
+    await router.push(`/${ROUTE_PATH.HOME}`);
 };
 
-const handleLogin = () => {
-    router.push(`/${tapValue.PROFILE}`);
-};
-
-const handleRegister = () => {
-    router.push(`/${tapValue.REGISTER}`);
-};
-
-const handleMyProfile = () => {
-    router.push(`/${tapValue.PROFILE}`);
-};
-
-// 새로운 핸들러 함수들
-const handleMainButton = () => {
-    if (isLoggedIn.value) {
-        handleMyProfile();
-    } else {
-        handleLogin();
-    }
-};
-
-const handleSecondaryButton = () => {
-    if (isLoggedIn.value) {
-        handleLogout();
-    } else {
-        handleRegister();
-    }
-};
-
-router.push(`/${tapValue.HOME}`);
+/* 앱 진입 시 홈으로 이동 (최초 진입 시에만) */
+if (route.path === "/") router.push(`/${ROUTE_PATH.HOME}`);
 </script>
 
 <template>

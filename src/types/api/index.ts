@@ -1,5 +1,11 @@
-export type IOllamaResponse = {
-    model: string;
-    response: string;
-    done: boolean;
+export type IAuthResponse = {
+    access_token: string;
+};
+
+export type IAuthRequest = {
+    accountId: string;
+    password: string;
+    userName?: string;
+    grade?: string;
+    stage?: string;
 };
