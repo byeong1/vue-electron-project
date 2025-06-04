@@ -23,11 +23,15 @@ export default defineConfig({
                 chunkFileNames: "assets/[name]-[hash].js",
                 entryFileNames: "assets/[name]-[hash].js",
             },
+            external: ["electron"],
         },
     },
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
         },
+    },
+    optimizeDeps: {
+        exclude: ["electron"],
     },
 });

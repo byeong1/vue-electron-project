@@ -49,7 +49,7 @@ const handleRegister = async (): Promise<void> => {
 
         updateLoginStatus(true);
 
-        router.push(`/${ROUTE_PATH.QUIZ}`);
+        router.push(`/${ROUTE_PATH.HOME}`);
     } catch (error) {
         let message = getErrorMessage(error, "회원가입에 실패했습니다.");
         alert(message);

@@ -1,7 +1,19 @@
-export { default as MainPage } from "./MainPage.vue";
-export { default as QuizSetupPage } from "./QuizSetupPage.vue";
-export { default as QuizPlayPage } from "./QuizPlayPage.vue";
-export { default as FortunePage } from "./FortunePage.vue";
-export { default as LoginPage } from "./LoginPage.vue";
-export { default as ProfilePage } from "./ProfilePage.vue";
-export { default as RegisterPage } from "./RegisterPage.vue";
+import MainPage from "./MainPage.vue";
+import QuizSetupPage from "./QuizSetupPage.vue";
+import QuizPlayPage from "./QuizPlayPage.vue";
+import FortunePage from "./FortunePage.vue";
+import LoginPage from "./LoginPage.vue";
+import ProfilePage from "./ProfilePage.vue";
+import RegisterPage from "./RegisterPage.vue";
+import PrinterPage from "./PrinterPage.vue";
+
+export {
+    MainPage,
+    QuizSetupPage,
+    QuizPlayPage,
+    FortunePage,
+    LoginPage,
+    ProfilePage,
+    RegisterPage,
+    PrinterPage,
+};

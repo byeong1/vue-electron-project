@@ -1,4 +1,5 @@
-import { createRouter, createWebHashHistory } from "vue-router";
+import { createRouter, createWebHashHistory, type RouteRecordRaw } from "vue-router";
+import WeatherUI from "../components/WeatherUI.vue";
 
 import {
     MainPage,
@@ -8,11 +9,22 @@ import {
     LoginPage,
     ProfilePage,
     RegisterPage,
+    PrinterPage,
 } from "@/pages";
 
 import { ROUTE_PATH } from "@/common";
 
-const routes = [
+const routes: Array<RouteRecordRaw> = [
+    {
+        path: "/",
+        name: "home",
+        component: MainPage,
+    },
+    {
+        path: "/weather",
+        name: "weather",
+        component: WeatherUI,
+    },
     {
         path: `/${ROUTE_PATH.HOME}`,
         name: "MainPage",
@@ -36,6 +48,7 @@ const routes = [
     { path: `/${ROUTE_PATH.LOGIN}`, name: "LoginPage", component: LoginPage },
     { path: `/${ROUTE_PATH.PROFILE}`, name: "ProfilePage", component: ProfilePage },
     { path: `/${ROUTE_PATH.REGISTER}`, name: "RegisterPage", component: RegisterPage },
+    { path: `/${ROUTE_PATH.PRINTER}`, name: "PrinterPage", component: PrinterPage },
 ];
 
 const router = createRouter({

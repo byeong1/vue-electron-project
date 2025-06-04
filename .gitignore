@@ -32,3 +32,10 @@ coverage
 out
 
 .env
+
+# Python 가상환경 및 임베디드 Python
+venv/
+python-embedded/
+__pycache__/
+*.py[cod]
+*$py.class

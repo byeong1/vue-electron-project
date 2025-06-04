@@ -10,6 +10,6 @@
         "sourceMap": true,
         "skipLibCheck": true
     },
-    "include": ["**/*.ts"],
+    "include": ["**/*.ts", "preload.js"],
     "exclude": ["node_modules"]
 }

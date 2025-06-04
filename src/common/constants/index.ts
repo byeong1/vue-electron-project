@@ -18,4 +18,6 @@ export const ROUTE_PATH = {
     REGISTER: "register",
     LOGIN: "login",
     THEME: "theme",
+    WEATHER: "weather",
+    PRINTER: "printer",
 };

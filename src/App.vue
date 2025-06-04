@@ -24,7 +24,9 @@ watch(
 const mainTabs = computed(() => [
     { label: "홈", value: ROUTE_PATH.HOME, icon: "📝" },
     { label: "문제 풀기", value: ROUTE_PATH.QUIZ, icon: "✏️" },
-    { label: "운세 보기", value: ROUTE_PATH.FORTUNE, icon: "🎯" },
+    { label: "운세 보기", value: ROUTE_PATH.FORTUNE, icon: "��" },
+    { label: "날씨 정보", value: ROUTE_PATH.WEATHER, icon: "🌤️" },
+    { label: "프린터", value: ROUTE_PATH.PRINTER, icon: "🖨️" },
     { label: "테마 모드", value: ROUTE_PATH.THEME, icon: isDarkMode.value ? "🌙" : "☀️" },
 ]);
 
@@ -38,6 +40,8 @@ watch(
         else if (path.startsWith(`/${ROUTE_PATH.QUIZ}`)) selectedTab.value = ROUTE_PATH.QUIZ;
         else if (path.startsWith(`/${ROUTE_PATH.FORTUNE}`)) selectedTab.value = ROUTE_PATH.FORTUNE;
         else if (path.startsWith(`/${ROUTE_PATH.PROFILE}`)) selectedTab.value = ROUTE_PATH.PROFILE;
+        else if (path.startsWith(`/${ROUTE_PATH.WEATHER}`)) selectedTab.value = ROUTE_PATH.WEATHER;
+        else if (path.startsWith(`/${ROUTE_PATH.PRINTER}`)) selectedTab.value = ROUTE_PATH.PRINTER;
         else selectedTab.value = "";
     },
     { immediate: true },

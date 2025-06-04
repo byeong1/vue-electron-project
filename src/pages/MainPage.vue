@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { SingleBox } from "@/components";
+import { ROUTE_PATH } from "@/common";
 </script>
 
 <template>
@@ -79,6 +80,32 @@ import { SingleBox } from "@/components";
 .limit {
     color: var(--button-primary);
     font-weight: bold;
+}
+
+.feature-links {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 600px;
+}
+
+.feature-button {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: var(--button-primary, #007bff);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition:
+        background-color 0.3s ease,
+        transform 0.2s ease;
+}
+
+.feature-button:hover {
+    background-color: var(--button-hover, #0056b3);
+    transform: translateY(-2px);
 }
 
 @media (max-width: 768px) {
